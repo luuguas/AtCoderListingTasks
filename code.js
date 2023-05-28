@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         AtCoder Listing Tasks
-// @namespace    http://tampermonkey.net/
+// @namespace    https://github.com/luuguas/AtCoderListingTasks
 // @version      1.0
 // @description  Click [Tasks] tab to open a drop-down list linked to each task. / [問題]タブをクリックすると、各問題へのリンクをドロップダウンリストで表示します。
 // @author       luuguas
