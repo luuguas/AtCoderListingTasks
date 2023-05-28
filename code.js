@@ -4,7 +4,7 @@
 // @version      1.0
 // @description  Click [Tasks] tab to open a drop-down list linked to each task. / [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 // @author       luuguas
-// @license      Apache
+// @license      Apache-2.0
 // @match        https://atcoder.jp/contests/*
 // @exclude      https://atcoder.jp/contests/
 // @exclude      https://atcoder.jp/contests/archive
@@ -61,6 +61,11 @@
     function AddList(){
         let url = location.href;
         let contest_name = url.split('/')[4];
+        let hash = contest_name.search(/[#\?]/);
+        if(hash !== -1){
+            //ハッシュ(#,?)を除く
+            contest_name = contest_name.slice(0, hash);
+        }
 
         let tasks_tab_li = document.getElementById(unique_tag).parentNode;
         let dropdown_menu = tasks_tab_li.querySelector('.dropdown-menu');
