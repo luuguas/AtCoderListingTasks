@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AtCoder Listing Tasks
 // @namespace    https://github.com/luuguas/AtCoderListingTasks
-// @version      1.0
+// @version      1.1
 // @description  Click [Tasks] tab to open a drop-down list linked to each task. / [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 // @author       luuguas
 // @license      Apache-2.0
@@ -13,8 +13,9 @@
 
 (function() {
     'use strict';
-    const contest_url = 'https://atcoder.jp/contests/';
-    const unique_tag = 'user-script-listing-tasks';
+    const CONTEST_URL = 'https://atcoder.jp/contests/';
+    const UNIQUE_TAG = 'user-script-listing-tasks';
+    const LIST_MAX_HEIGHT = '760%';
 
     //[問題]タブに本UserScript用のidを追加(タブがなければfalseを返す)
     function AttachId(){
@@ -27,14 +28,14 @@
             return false;
         }
         else{
-            tasks_tab.setAttribute('id', unique_tag);
+            tasks_tab.setAttribute('id', UNIQUE_TAG);
             return true;
         }
     }
 
     //[提出結果]タブと同様のドロップダウンリストに変える(中身は空)
     function Togglize(){
-        let tasks_tab = document.getElementById(unique_tag);
+        let tasks_tab = document.getElementById(UNIQUE_TAG);
 
         let attr = {
             'class': 'dropdown-toggle',
@@ -53,6 +54,7 @@
         tasks_tab.appendChild(caret);
 
         let dropdown_menu = document.createElement('ul');
+        dropdown_menu.setAttribute('style', 'max-height: ' + LIST_MAX_HEIGHT + '; overflow: visible auto;');
         dropdown_menu.className = 'dropdown-menu';
         tasks_tab.parentNode.appendChild(dropdown_menu);
     }
@@ -67,17 +69,17 @@
             contest_name = contest_name.slice(0, hash);
         }
 
-        let tasks_tab_li = document.getElementById(unique_tag).parentNode;
+        let tasks_tab_li = document.getElementById(UNIQUE_TAG).parentNode;
         let dropdown_menu = tasks_tab_li.querySelector('.dropdown-menu');
 
         //[問題一覧]の追加
         let all_tasks = document.createElement('li');
         let lang = document.querySelector('meta[http-equiv="Content-Language"]');
         if(lang !== null && lang.getAttribute('content') === 'en'){
-            all_tasks.innerHTML = '<a href="' + contest_url + contest_name + '/tasks"><span class="glyphicon glyphicon-list" aria-hidden="true"></span> All Tasks</a>';
+            all_tasks.innerHTML = '<a href="' + CONTEST_URL + contest_name + '/tasks"><span class="glyphicon glyphicon-list" aria-hidden="true"></span> All Tasks</a>';
         }
         else{
-            all_tasks.innerHTML = '<a href="' + contest_url + contest_name + '/tasks"><span class="glyphicon glyphicon-list" aria-hidden="true"></span> 問題一覧</a>';
+            all_tasks.innerHTML = '<a href="' + CONTEST_URL + contest_name + '/tasks"><span class="glyphicon glyphicon-list" aria-hidden="true"></span> 問題一覧</a>';
         }
         dropdown_menu.appendChild(all_tasks);
 
@@ -90,7 +92,7 @@
         let xhr = new XMLHttpRequest();
         xhr.responseType = 'document';
         xhr.onreadystatechange = function(){
-            let tasks_tab_li = document.getElementById(unique_tag).parentNode;
+            let tasks_tab_li = document.getElementById(UNIQUE_TAG).parentNode;
             let dropdown_menu = tasks_tab_li.querySelector('.dropdown-menu');
 
             if(xhr.readyState === 4){
