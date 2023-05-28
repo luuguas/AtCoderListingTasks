@@ -2,8 +2,9 @@
 // @name         AtCoder Listing Tasks
 // @namespace    https://github.com/luuguas/AtCoderListingTasks
 // @version      1.0
-// @description  Click [Tasks] tab to open a drop-down list linked to each task. / [問題]タブをクリックすると、各問題へのリンクをドロップダウンリストで表示します。
+// @description  Click [Tasks] tab to open a drop-down list linked to each task. / [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 // @author       luuguas
+// @license      Apache
 // @match        https://atcoder.jp/contests/*
 // @exclude      https://atcoder.jp/contests/
 // @exclude      https://atcoder.jp/contests/archive
@@ -128,7 +129,7 @@
                     console.log('[AtCoder Listing Tasks] Failed...');
                 }
             }
-        }
+        };
         xhr.open('GET', 'https://atcoder.jp/contests/' + contest_name + '/tasks', true);
         xhr.send(null);
     }
