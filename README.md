@@ -13,4 +13,6 @@ AtCoderのコンテストページで[問題]タブをクリックすると、�
 
 また、[問題一覧]を押すと、通常通り問題の一覧ページに移動します。
 
-![Screenshot_2023-05-28-15-58-26-491](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/925dff23-fcde-44b8-8471-0a5afc6b4817)
+「新しいタブで開く」のチェックをONにすると、移動先のページが新しいタブで開きます。
+
+![Screenshot_2023-05-31-18-07-19-528](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/4528ecb2-f079-4f57-b58a-5da1cb899210)
