@@ -29,9 +29,9 @@
         this.data = {};
         this.default_data = {
             'new_tab': false,
-        }
+        };
         this.storage = localStorage;
-    }
+    };
     Setting.prototype = {
         loadSetting: function(){
             let value = this.storage[SETTING_KEY];
@@ -100,14 +100,15 @@
     }
 
     /* [[✓]新しいタブで開く]のチェックの有無でaタグの属性を切り替える関数 */
-    function changeNewTabAttr(){
+    function changeNewTabAttr(e){
+        let a = e.currentTarget;
         if(setting.getValue('new_tab')){
-            this.target = '_blank';
-            this.rel = 'noopener noreferrer';
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
         }
         else{
-            this.target = '_self';
-            this.rel = '';
+            a.target = '_self';
+            a.rel = '';
         }
     }
 
