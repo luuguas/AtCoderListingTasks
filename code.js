@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           AtCoder Listing Tasks
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
-// @version        1.2
+// @version        1.2.1
 // @description    [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 // @description:en Click [Tasks] tab to open a drop-down list linked to each task.
 // @author         luuguas
@@ -16,7 +16,7 @@
     'use strict';
     const CONTEST_URL = 'https://atcoder.jp/contests/';
     const TAG_PREFIX = 'userscript-ACLT';
-    const LIST_MAX_HEIGHT = '760%';
+    const LIST_MAX_HEIGHT = '770%';
     const STYLES = {
         'dropdown': `max-height: ${LIST_MAX_HEIGHT}; overflow: visible auto;`,
         'label': `width: 100%; margin: 0px; padding: 3px 10px; clear: both; font-weight: normal; white-space: nowrap;`,
@@ -96,6 +96,7 @@
 
         let dropdown_menu = document.createElement('ul');
         dropdown_menu.className = `dropdown-menu`;
+        dropdown_menu.style = STYLES['dropdown'];
         tasks_tab.parentNode.appendChild(dropdown_menu);
     }
 
