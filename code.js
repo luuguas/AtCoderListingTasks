@@ -12,6 +12,7 @@
 // @grant          none
 // ==/UserScript==
 
+(function () {
 'use strict';
 
 //AtCoderに標準で読み込まれているjQueryを使用
@@ -383,3 +384,5 @@ Launcher.prototype = {
 /* スクリプトを実行 */
 let launcher = new Launcher();
 launcher.launch();
+
+})();
