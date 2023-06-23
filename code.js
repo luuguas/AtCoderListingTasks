@@ -31,7 +31,7 @@ const TEXT = {
     loadingFailed: {'ja': '(読み込み失敗)', 'en': '(Loading Failed)'},
 };
 
-//const oldSettingKey = 'Setting_AtCoderListingTasks';
+const OLD_SETTING_KEY = 'Setting_AtCoderListingTasks';
 const DB_NAME = 'UserScript_ACLT_Database';
 const DB_VERSION = 1;
 const STORE_NAME = { option: 'option', problemList: 'problemList' };
@@ -375,6 +375,7 @@ Launcher.prototype = {
         this.changeToDropdown();
         this.addList();
         
+        window.localStorage.removeItem(OLD_SETTING_KEY);
         await this.setting.removeOldData();
     },
 };
