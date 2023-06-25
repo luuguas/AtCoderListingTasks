@@ -23,13 +23,18 @@ const TAG_PREFIX = 'Userscript-ACLT';
 const LIST_MAX_HEIGHT = '770%';
 const STYLE = {
     dropdown: `max-height: ${LIST_MAX_HEIGHT}; overflow: visible auto;`,
-    label: `width: 100%; margin: 0px; padding: 3px 10px; clear: both; font-weight: normal; white-space: nowrap;`,
-    checkbox: `margin: 0px; vertical-align: middle;`,
+    label: 'width: 100%; margin: 0px; padding: 3px 10px; clear: both; font-weight: normal; white-space: nowrap;',
+    checkbox: 'margin: 0px; vertical-align: middle;',
 };
 const TEXT = {
-    newTab: {'ja': ' 新しいタブで開く', 'en': ' Open in a new tab'},
-    allTasks: {'ja': ' 問題一覧', 'en': ' All Tasks'},
-    loadingFailed: {'ja': '(読み込み失敗)', 'en': '(Loading Failed)'},
+    newTab: { 'ja': '新しいタブで開く', 'en': 'Open in a new tab' },
+    allTasks: { 'ja': '問題一覧', 'en': 'All Tasks' },
+    loadingFailed: { 'ja': '(読み込み失敗)', 'en': '(Loading Failed)' },
+    atOnce: { 'ja': 'まとめて開く', 'en': 'Open at once' },
+    modalDiscription: { 'ja': '複数の問題をまとめて開きます。', 'en': 'Open several tasks at once.' },
+    cancel: { 'ja': 'キャンセル', 'en': 'Cancel' },
+    all: { 'ja': 'すべて', 'en': 'All' },
+    specify: { 'ja': '範囲を指定', 'en': 'Specify the range' },
 };
 
 const OLD_SETTING_KEY = 'Setting_AtCoderListingTasks';
@@ -297,27 +302,27 @@ Launcher.prototype = {
         tasks_tab.append($('<span>', { class: 'caret' }));
         tasks_tab.parent().append($('<ul>', { class: 'dropdown-menu', style: STYLE.dropdown }));
     },
-    changeNewTabAttr: function (e) {
-        let a = e.currentTarget;
-        if (this.that.setting.newTab) {
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-        }
-        else {
-            a.target = '_self';
-            a.rel = '';
-        }
-    },
     addList: function () {
         let dropdown_menu = $(`#${TAG_PREFIX}-tab`).parent().children('.dropdown-menu');
     
         /* [問題一覧]の追加 */
-        let all_tasks = $('<a>', {href: `${CONTEST_URL}/${this.setting.contestName}/tasks`});
+        let all_tasks = $('<a>', { href: `${CONTEST_URL}/${this.setting.contestName}/tasks` });
         all_tasks.append($('<span>', { class: 'glyphicon glyphicon-list' }).attr('aria-hidden', 'true'));
-        all_tasks.append(document.createTextNode(TEXT.allTasks[this.setting.lang]));
+        all_tasks.append(document.createTextNode(' ' + TEXT.allTasks[this.setting.lang]));
         //チェックボックスにチェックが付いていたら新しいタブで開く
         all_tasks[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, that: this });
         dropdown_menu.append($('<li>').append(all_tasks));
+        
+        /* [まとめて開く]の追加 */
+        let at_once = $('<a>', { href: '#' });
+        at_once.append($('<span>', { class: 'glyphicon glyphicon-sort-by-attributes-alt' }).attr('aria-hidden', 'true'));
+        at_once.append(document.createTextNode(' ' + TEXT.atOnce[this.setting.lang]));
+        at_once[0].addEventListener('click', (e) => {
+            $(`#${TAG_PREFIX}-modal`).modal('show');
+            e.preventDefault();
+        });
+        dropdown_menu.append($('<li>').append(at_once));
+        
         /* [[✓]新しいタブで開く]の追加 */
         let label = $('<label>', { style: STYLE.label });
         label.css('color', all_tasks.css('color')); //[問題一覧]から色情報を取得
@@ -331,7 +336,7 @@ Launcher.prototype = {
             }
         });
         label.append(checkbox);
-        label.append(document.createTextNode(TEXT.newTab[this.setting.lang]));
+        label.append(document.createTextNode(' ' + TEXT.newTab[this.setting.lang]));
         dropdown_menu.prepend($('<li>').append(label));
         //チェックボックスが押された場合はドロップダウンリストを非表示にしない
         dropdown_menu.on('click', (e) => {
@@ -339,8 +344,10 @@ Launcher.prototype = {
                 e.stopPropagation();
             }
         });
+        
         /* 分割線の追加 */
         dropdown_menu.append($('<li>', { class: 'divider' }));
+        
         /* 各問題の追加 */
         if (this.setting.problemList !== null) {
             //リストを追加
@@ -362,6 +369,54 @@ Launcher.prototype = {
             console.log('[AtCoder Listing Tasks] Failed...');
         }
     },
+    changeNewTabAttr: function (e) {
+        let a = e.currentTarget;
+        if (this.that.setting.newTab) {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+        }
+        else {
+            a.target = '_self';
+            a.rel = '';
+        }
+    },
+    
+    addModal: function () {
+        let modal = $('<div>', { id: `${TAG_PREFIX}-modal`, class: 'modal fade', tabindex: '-1', role: 'dialog' });
+        
+        //header
+        let header = $('<div>', { class: 'modal-header' });
+        let x = $('<button>', { type: 'button', class: 'close', 'data-dismiss': 'modal', 'aria-label': 'Close' });
+        x.append($('<span>', { 'aria-hidden': true, text: '×' }));
+        header.append(x);
+        header.append($('<h4>', { class: 'modal-title', text: TEXT.atOnce[this.setting.lang] }));
+        
+        //body
+        let body = $('<div>', { class: 'modal-body' });
+        body.append($('<p>', { text: TEXT.modalDiscription[this.setting.lang] }));
+        let label_all = $('<label>');
+        let check_all = $('<input>', { type: 'radio', name: 'open-type' });
+        let label_specify = label_all.clone(true);
+        let check_specify = check_all.clone(true);
+        check_all.prop('checked', true);
+        label_all.append(check_all).append(document.createTextNode(TEXT.all[this.setting.lang]));
+        label_specify.append(check_specify).append(document.createTextNode(TEXT.specify[this.setting.lang]));
+        body.append($('<div>', { class: 'radio' }).append(label_all));
+        body.append($('<div>', { class: 'radio' }).append(label_specify));
+        
+        //footer
+        let footer = $('<div>', { class: 'modal-footer' });
+        let cancel = $('<button>', { type: 'button', class: 'btn btn-default', 'data-dismiss': 'modal', text: TEXT.cancel[this.setting.lang] });
+        let open = $('<button>', { type: 'button', class: 'btn btn-primary', text: TEXT.atOnce[this.setting.lang] });
+        footer.append(cancel, open);
+        
+        //モーダルウィンドウを追加
+        let dialog = $('<div>', { class: 'modal-dialog', role: 'document' });
+        let content = $('<div>', { class: 'modal-content' });
+        content.append(header, body, footer);
+        modal.append(dialog.append(content));
+        $('#main-div').before(modal);
+    },
     
     launch: async function () {
         let tabExists = this.attachId();
@@ -375,6 +430,8 @@ Launcher.prototype = {
         this.setting.getLanguage();
         this.changeToDropdown();
         this.addList();
+        
+        this.addModal();
         
         window.localStorage.removeItem(OLD_SETTING_KEY);
         await this.setting.removeOldData();
