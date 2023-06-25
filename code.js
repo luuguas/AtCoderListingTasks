@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name           AtCoder Listing Tasks
+// @name           AtCoder Listing Tasks(Debug)
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
 // @version        1.4
 // @description    [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
@@ -28,7 +28,7 @@ const STYLE = {
 };
 const TEXT = {
     newTab: { 'ja': '新しいタブで開く', 'en': 'Open in a new tab' },
-    allTasks: { 'ja': '問題一覧', 'en': 'All Tasks' },
+    allTasks: { 'ja': '問題一覧', 'en': 'Task Table' },
     loadingFailed: { 'ja': '(読み込み失敗)', 'en': '(Loading Failed)' },
     atOnce: { 'ja': 'まとめて開く', 'en': 'Open at once' },
     modalDiscription: { 'ja': '複数の問題をまとめて開きます。', 'en': 'Open several tasks at once.' },
