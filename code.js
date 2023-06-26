@@ -25,6 +25,11 @@ const STYLE = {
     dropdown: `max-height: ${LIST_MAX_HEIGHT}; overflow: visible auto;`,
     label: 'width: 100%; margin: 0px; padding: 3px 10px; clear: both; font-weight: normal; white-space: nowrap;',
     checkbox: 'margin: 0px; vertical-align: middle;',
+    option: 'margin: 5px 0px 10px;',
+    flex: 'display: flex; align-items: center;',
+    all: 'height: 30px;',
+    specify: 'height: 35px',
+    ratioContainer: 'padding: 0px 15px 0px 10px;',
 };
 const TEXT = {
     newTab: { 'ja': '新しいタブで開く', 'en': 'Open in a new tab' },
@@ -35,6 +40,7 @@ const TEXT = {
     cancel: { 'ja': 'キャンセル', 'en': 'Cancel' },
     all: { 'ja': 'すべて', 'en': 'All' },
     specify: { 'ja': '範囲を指定', 'en': 'Specify the range' },
+    modalInfo: { 'ja': 'が開かれます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will be opened. (If pop-ups are blocked, please allow them.)' },
 };
 
 const OLD_SETTING_KEY = 'Setting_AtCoderListingTasks';
@@ -316,7 +322,7 @@ Launcher.prototype = {
         /* [まとめて開く]の追加 */
         let at_once = $('<a>', { href: '#' });
         at_once.append($('<span>', { class: 'glyphicon glyphicon-sort-by-attributes-alt' }).attr('aria-hidden', 'true'));
-        at_once.append(document.createTextNode(' ' + TEXT.atOnce[this.setting.lang]));
+        at_once.append(document.createTextNode(' ' + TEXT.atOnce[this.setting.lang] + '...'));
         at_once[0].addEventListener('click', (e) => {
             $(`#${TAG_PREFIX}-modal`).modal('show');
             e.preventDefault();
@@ -394,15 +400,36 @@ Launcher.prototype = {
         //body
         let body = $('<div>', { class: 'modal-body' });
         body.append($('<p>', { text: TEXT.modalDiscription[this.setting.lang] }));
+        
+        let option = $('<div>', { style: STYLE.option });
+        let all = $('<div>', { style: STYLE.flex + STYLE.all });
+        let specify = $('<div>', { style: STYLE.flex + STYLE.specify });
         let label_all = $('<label>');
-        let check_all = $('<input>', { type: 'radio', name: 'open-type' });
+        let ratio_all = $('<input>', { type: 'radio', name: 'open-type' });
         let label_specify = label_all.clone(true);
-        let check_specify = check_all.clone(true);
-        check_all.prop('checked', true);
-        label_all.append(check_all).append(document.createTextNode(TEXT.all[this.setting.lang]));
-        label_specify.append(check_specify).append(document.createTextNode(TEXT.specify[this.setting.lang]));
-        body.append($('<div>', { class: 'radio' }).append(label_all));
-        body.append($('<div>', { class: 'radio' }).append(label_specify));
+        let ratio_specify = ratio_all.clone(true);
+        
+        ratio_all.prop('checked', true);
+        label_all.append(ratio_all, document.createTextNode(TEXT.all[this.setting.lang]));
+        label_specify.append(ratio_specify, document.createTextNode(TEXT.specify[this.setting.lang] + ':'));
+        all.append($('<div>', { class: 'radio', style: STYLE.ratioContainer }).append(label_all));
+        specify.append($('<div>', { class: 'radio', style: STYLE.ratioContainer }).append(label_specify));
+        let aw = $(`<div class="btn-group">
+  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+    Action
+  </button>
+  <ul class="dropdown-menu">
+    <li><a class="dropdown-item" href="#">Action</a></li>
+    <li><a class="dropdown-item" href="#">Another action</a></li>
+    <li><a class="dropdown-item" href="#">Something else here</a></li>
+    <li><a class="dropdown-item" href="#">Separated link</a></li>
+  </ul>
+</div>`);
+        specify.append(aw);
+        
+        option.append(all, specify);
+        body.append(option);
+        body.append($('<p>', { text: '20 個のタブ' + TEXT.modalInfo[this.setting.lang] }));
         
         //footer
         let footer = $('<div>', { class: 'modal-footer' });
