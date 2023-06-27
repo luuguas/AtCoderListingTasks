@@ -25,11 +25,13 @@ const STYLE = {
     dropdown: `max-height: ${LIST_MAX_HEIGHT}; overflow: visible auto;`,
     label: 'width: 100%; margin: 0px; padding: 3px 10px; clear: both; font-weight: normal; white-space: nowrap;',
     checkbox: 'margin: 0px; vertical-align: middle;',
-    option: 'margin: 5px 0px 10px;',
+    option: 'margin: 5px 0px 15px;',
     flex: 'display: flex; align-items: center;',
     all: 'height: 30px;',
     specify: 'height: 35px',
     ratioContainer: 'padding: 0px 15px 0px 10px;',
+    caret: 'margin-left: 5px;',
+    between: 'padding: 0px 5px;',
 };
 const TEXT = {
     newTab: { 'ja': '新しいタブで開く', 'en': 'Open in a new tab' },
@@ -320,14 +322,16 @@ Launcher.prototype = {
         dropdown_menu.append($('<li>').append(all_tasks));
         
         /* [まとめて開く]の追加 */
-        let at_once = $('<a>', { href: '#' });
-        at_once.append($('<span>', { class: 'glyphicon glyphicon-sort-by-attributes-alt' }).attr('aria-hidden', 'true'));
-        at_once.append(document.createTextNode(' ' + TEXT.atOnce[this.setting.lang] + '...'));
-        at_once[0].addEventListener('click', (e) => {
-            $(`#${TAG_PREFIX}-modal`).modal('show');
-            e.preventDefault();
-        });
-        dropdown_menu.append($('<li>').append(at_once));
+        if (this.setting.problemList !== null) {
+            let at_once = $('<a>', { href: '#' });
+            at_once.append($('<span>', { class: 'glyphicon glyphicon-sort-by-attributes-alt' }).attr('aria-hidden', 'true'));
+            at_once.append(document.createTextNode(' ' + TEXT.atOnce[this.setting.lang] + '...'));
+            at_once[0].addEventListener('click', (e) => {
+                $(`#${TAG_PREFIX}-modal`).modal('show');
+                e.preventDefault();
+            });
+            dropdown_menu.append($('<li>').append(at_once));
+        }
         
         /* [[✓]新しいタブで開く]の追加 */
         let label = $('<label>', { style: STYLE.label });
@@ -414,18 +418,17 @@ Launcher.prototype = {
         label_specify.append(ratio_specify, document.createTextNode(TEXT.specify[this.setting.lang] + ':'));
         all.append($('<div>', { class: 'radio', style: STYLE.ratioContainer }).append(label_all));
         specify.append($('<div>', { class: 'radio', style: STYLE.ratioContainer }).append(label_specify));
-        let aw = $(`<div class="btn-group">
-  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-    Action
-  </button>
-  <ul class="dropdown-menu">
-    <li><a class="dropdown-item" href="#">Action</a></li>
-    <li><a class="dropdown-item" href="#">Another action</a></li>
-    <li><a class="dropdown-item" href="#">Something else here</a></li>
-    <li><a class="dropdown-item" href="#">Separated link</a></li>
-  </ul>
-</div>`);
-        specify.append(aw);
+        
+        let select_begin = $('<div>', { class: 'btn-group' });
+        let begin_button = $('<button>', { text: 'A', class: 'btn btn-default dropdown-toggle', 'data-toggle': 'dropdown', 'aria-expanded': 'false' });
+        begin_button.append($('<span>', { class: 'caret', style: STYLE.caret }));
+        let begin_list = $('<ul>', { class: 'dropdown-menu' });
+        for (let data of this.setting.problemList) {
+            begin_list.append($('<li>').append($('<a>', { text: `${data.diff} - ${data.name}`, class: 'dropdown-item', href: '#' })));
+        }
+        select_begin.append(begin_button, begin_list);
+        let select_end = select_begin.clone(true);
+        specify.append(select_begin, $('<span>', { text: '−', style: STYLE.between }), select_end);
         
         option.append(all, specify);
         body.append(option);
