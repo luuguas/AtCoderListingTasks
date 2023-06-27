@@ -19,20 +19,50 @@
 let $ = window.jQuery;
 
 const CONTEST_URL = 'https://atcoder.jp/contests';
-const TAG_PREFIX = 'Userscript-ACLT';
+const ID_PREFIX = 'userscript-ACLT';
+const PRE = 'ACLT';
 const LIST_MAX_HEIGHT = '770%';
-const STYLE = {
-    dropdown: `max-height: ${LIST_MAX_HEIGHT}; overflow: visible auto;`,
-    label: 'width: 100%; margin: 0px; padding: 3px 10px; clear: both; font-weight: normal; white-space: nowrap;',
-    checkbox: 'margin: 0px; vertical-align: middle;',
-    option: 'margin: 5px 0px 15px;',
-    flex: 'display: flex; align-items: center;',
-    all: 'height: 30px;',
-    specify: 'height: 35px',
-    ratioContainer: 'padding: 0px 15px 0px 10px;',
-    caret: 'margin-left: 5px;',
-    between: 'padding: 0px 5px;',
-};
+const CSS = `
+.${PRE}-dropdown {
+    max-height: ${LIST_MAX_HEIGHT};
+    overflow: visible auto;
+}
+.${PRE}-label {
+    width: 100%;
+    margin: 0px;
+    padding: 3px 10px;
+    clear: both;
+    font-weight: normal;
+    white-space: nowrap;
+}
+.${PRE}-checkbox {
+    margin: 0px !important;
+    vertical-align: middle;
+}
+
+.${PRE}-option {
+    margin: 5px 0px 15px;
+}
+.${PRE}-flex {
+    display: flex;
+    align-items: center;
+}
+.${PRE}-select-all {
+    height: 30px;
+}
+.${PRE}-select-specify {
+    height: 35px;
+}
+.${PRE}-ratio {
+    padding: 0px 15px 0px 10px;
+}
+.${PRE}-caret {
+    margin-left: 5px !important;
+}
+.${PRE}-between {
+    padding: 0px 5px;
+}
+`;
 const TEXT = {
     newTab: { 'ja': '新しいタブで開く', 'en': 'Open in a new tab' },
     allTasks: { 'ja': '問題一覧', 'en': 'Task Table' },
@@ -293,12 +323,16 @@ Launcher.prototype = {
             return false;
         }
         else{
-            tasks_tab.attr('id', `${TAG_PREFIX}-tab`);
+            tasks_tab.attr('id', `${ID_PREFIX}-tab`);
             return true;
         }
     },
+    addCss: function () {
+        let style = $('<style>', { id: `${ID_PREFIX}-style`, html: CSS });
+        $('head').append(style);
+    },
     changeToDropdown: function () {
-        let tasks_tab = $(`#${TAG_PREFIX}-tab`);
+        let tasks_tab = $(`#${ID_PREFIX}-tab`);
         tasks_tab.attr({
             'class': 'dropdown-toggle',
             'data-toggle': 'dropdown',
@@ -308,10 +342,10 @@ Launcher.prototype = {
             'aria-expanded': 'false',
         });
         tasks_tab.append($('<span>', { class: 'caret' }));
-        tasks_tab.parent().append($('<ul>', { class: 'dropdown-menu', style: STYLE.dropdown }));
+        tasks_tab.parent().append($('<ul>', { class: `dropdown-menu ${PRE}-dropdown` }));
     },
     addList: function () {
-        let dropdown_menu = $(`#${TAG_PREFIX}-tab`).parent().children('.dropdown-menu');
+        let dropdown_menu = $(`#${ID_PREFIX}-tab`).parent().children('.dropdown-menu');
     
         /* [問題一覧]の追加 */
         let all_tasks = $('<a>', { href: `${CONTEST_URL}/${this.setting.contestName}/tasks` });
@@ -327,16 +361,16 @@ Launcher.prototype = {
             at_once.append($('<span>', { class: 'glyphicon glyphicon-sort-by-attributes-alt' }).attr('aria-hidden', 'true'));
             at_once.append(document.createTextNode(' ' + TEXT.atOnce[this.setting.lang] + '...'));
             at_once[0].addEventListener('click', (e) => {
-                $(`#${TAG_PREFIX}-modal`).modal('show');
+                $(`#${ID_PREFIX}-modal`).modal('show');
                 e.preventDefault();
             });
             dropdown_menu.append($('<li>').append(at_once));
         }
         
         /* [[✓]新しいタブで開く]の追加 */
-        let label = $('<label>', { style: STYLE.label });
+        let label = $('<label>', { class: `${PRE}-label` });
         label.css('color', all_tasks.css('color')); //[問題一覧]から色情報を取得
-        let checkbox = $('<input>', { type: 'checkbox', style: STYLE.checkbox });
+        let checkbox = $('<input>', { type: 'checkbox', class: `${PRE}-checkbox` });
         //チェックボックスはチェック状態をストレージと同期
         checkbox.prop('checked', this.setting.newTab);
         checkbox.on('click', (e) => {
@@ -392,7 +426,7 @@ Launcher.prototype = {
     },
     
     addModal: function () {
-        let modal = $('<div>', { id: `${TAG_PREFIX}-modal`, class: 'modal fade', tabindex: '-1', role: 'dialog' });
+        let modal = $('<div>', { id: `${ID_PREFIX}-modal`, class: 'modal fade', tabindex: '-1', role: 'dialog' });
         
         //header
         let header = $('<div>', { class: 'modal-header' });
@@ -405,9 +439,9 @@ Launcher.prototype = {
         let body = $('<div>', { class: 'modal-body' });
         body.append($('<p>', { text: TEXT.modalDiscription[this.setting.lang] }));
         
-        let option = $('<div>', { style: STYLE.option });
-        let all = $('<div>', { style: STYLE.flex + STYLE.all });
-        let specify = $('<div>', { style: STYLE.flex + STYLE.specify });
+        let option = $('<div>', { class: `${PRE}-option` });
+        let all = $('<div>', { class: `${PRE}-flex ${PRE}-select-all` });
+        let specify = $('<div>', { class: `${PRE}-flex ${PRE}-select-specify` });
         let label_all = $('<label>');
         let ratio_all = $('<input>', { type: 'radio', name: 'open-type' });
         let label_specify = label_all.clone(true);
@@ -416,19 +450,19 @@ Launcher.prototype = {
         ratio_all.prop('checked', true);
         label_all.append(ratio_all, document.createTextNode(TEXT.all[this.setting.lang]));
         label_specify.append(ratio_specify, document.createTextNode(TEXT.specify[this.setting.lang] + ':'));
-        all.append($('<div>', { class: 'radio', style: STYLE.ratioContainer }).append(label_all));
-        specify.append($('<div>', { class: 'radio', style: STYLE.ratioContainer }).append(label_specify));
+        all.append($('<div>', { class: `radio ${PRE}-ratio` }).append(label_all));
+        specify.append($('<div>', { class: `radio ${PRE}-ratio` }).append(label_specify));
         
         let select_begin = $('<div>', { class: 'btn-group' });
         let begin_button = $('<button>', { text: 'A', class: 'btn btn-default dropdown-toggle', 'data-toggle': 'dropdown', 'aria-expanded': 'false' });
-        begin_button.append($('<span>', { class: 'caret', style: STYLE.caret }));
+        begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));
         let begin_list = $('<ul>', { class: 'dropdown-menu' });
         for (let data of this.setting.problemList) {
             begin_list.append($('<li>').append($('<a>', { text: `${data.diff} - ${data.name}`, class: 'dropdown-item', href: '#' })));
         }
         select_begin.append(begin_button, begin_list);
         let select_end = select_begin.clone(true);
-        specify.append(select_begin, $('<span>', { text: '−', style: STYLE.between }), select_end);
+        specify.append(select_begin, $('<span>', { text: '−', class: `${PRE}-between` }), select_end);
         
         option.append(all, specify);
         body.append(option);
@@ -458,6 +492,7 @@ Launcher.prototype = {
         
         await this.loadSetting();
         this.setting.getLanguage();
+        this.addCss();
         this.changeToDropdown();
         this.addList();
         
