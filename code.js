@@ -56,6 +56,9 @@ const CSS = `
 .${PRE}-ratio {
     padding: 0px 15px 0px 10px;
 }
+.${PRE}-toggle {
+    min-width: 50px;
+}
 .${PRE}-caret {
     margin-left: 5px !important;
 }
@@ -166,6 +169,10 @@ IDBManager.prototype = {
 let Setting = function () {
     this.newTab = null;
     this.problemList = null;
+    this.atOnce = {
+        begin: 0,
+        end: 0,
+    };
     this.lang = null;
     this.contestName = null;
     
@@ -352,7 +359,7 @@ Launcher.prototype = {
         all_tasks.append($('<span>', { class: 'glyphicon glyphicon-list' }).attr('aria-hidden', 'true'));
         all_tasks.append(document.createTextNode(' ' + TEXT.allTasks[this.setting.lang]));
         //チェックボックスにチェックが付いていたら新しいタブで開く
-        all_tasks[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, that: this });
+        all_tasks[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, setting: this.setting });
         dropdown_menu.append($('<li>').append(all_tasks));
         
         /* [まとめて開く]の追加 */
@@ -398,7 +405,7 @@ Launcher.prototype = {
             for (let data of this.setting.problemList) {
                 let a = $('<a>', { href: data.url, text: `${data.diff} - ${data.name}` });
                 //チェックボックスにチェックが付いていたら新しいタブで開く
-                a[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, that: this });
+                a[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, setting: this.setting });
                 dropdown_menu.append($('<li>').append(a));
             }
             console.log('[AtCoder Listing Tasks] Succeeded!');
@@ -415,7 +422,7 @@ Launcher.prototype = {
     },
     changeNewTabAttr: function (e) {
         let a = e.currentTarget;
-        if (this.that.setting.newTab) {
+        if (this.setting.newTab) {
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
         }
@@ -453,15 +460,25 @@ Launcher.prototype = {
         all.append($('<div>', { class: `radio ${PRE}-ratio` }).append(label_all));
         specify.append($('<div>', { class: `radio ${PRE}-ratio` }).append(label_specify));
         
-        let select_begin = $('<div>', { class: 'btn-group' });
-        let begin_button = $('<button>', { text: 'A', class: 'btn btn-default dropdown-toggle', 'data-toggle': 'dropdown', 'aria-expanded': 'false' });
-        begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));
+        let select_begin = $('<div>', { class: `btn-group` });
+        let begin_button = $('<button>', { text: 'A', class: `btn btn-default dropdown-toggle ${PRE}-toggle`, 'data-toggle': 'dropdown', 'aria-expanded': 'false' });
+        begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));        
         let begin_list = $('<ul>', { class: 'dropdown-menu' });
-        for (let data of this.setting.problemList) {
-            begin_list.append($('<li>').append($('<a>', { text: `${data.diff} - ${data.name}`, class: 'dropdown-item', href: '#' })));
-        }
+        $.each(this.setting.problemList, (idx, data) => {
+            let a = $('<a>', { text: `${data.diff} - ${data.name}`, class: 'dropdown-item', href: '#', 'data-index': `${idx}` });
+            begin_list.append($('<li>').append(a));
+        });
         select_begin.append(begin_button, begin_list);
         let select_end = select_begin.clone(true);
+        
+        select_begin.find('a').each((idx, node) => {
+            node.addEventListener('click', { handleEvent: this.getProblemIndex, idx, setting: this.setting, button: begin_button, isBegin: true });
+        });
+        let end_button = select_end.find('button');
+        select_end.find('a').each((idx, node) => {
+            node.addEventListener('click', { handleEvent: this.getProblemIndex, idx, setting: this.setting, button: end_button, isBegin: false });
+        });
+        
         specify.append(select_begin, $('<span>', { text: '−', class: `${PRE}-between` }), select_end);
         
         option.append(all, specify);
@@ -480,6 +497,15 @@ Launcher.prototype = {
         content.append(header, body, footer);
         modal.append(dialog.append(content));
         $('#main-div').before(modal);
+    },
+    getProblemIndex: function (e) {
+        if(this.isBegin) {
+            this.setting.atOnce.begin = this.idx;
+        }
+        else {
+            this.setting.atOnce.end = this.idx;
+        }
+        this.button.html(`${this.setting.problemList[this.idx].diff}<span class="caret ${PRE}-caret"></span>`);
     },
     
     launch: async function () {
