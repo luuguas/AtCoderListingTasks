@@ -21,10 +21,9 @@ let $ = window.jQuery;
 const CONTEST_URL = 'https://atcoder.jp/contests';
 const ID_PREFIX = 'userscript-ACLT';
 const PRE = 'ACLT';
-const LIST_MAX_HEIGHT = '770%';
 const CSS = `
 .${PRE}-dropdown {
-    max-height: ${LIST_MAX_HEIGHT};
+    max-height: 890%;
     overflow: visible auto;
 }
 .${PRE}-label {
@@ -58,6 +57,10 @@ const CSS = `
 }
 .${PRE}-toggle {
     min-width: 50px;
+}
+.${PRE}-list {
+    max-height: 800%;
+    overflow: visible auto;
 }
 .${PRE}-caret {
     margin-left: 5px !important;
@@ -364,12 +367,11 @@ Launcher.prototype = {
         
         /* [まとめて開く]の追加 */
         if (this.setting.problemList !== null) {
-            let at_once = $('<a>', { href: '#' });
+            let at_once = $('<a>');
             at_once.append($('<span>', { class: 'glyphicon glyphicon-sort-by-attributes-alt' }).attr('aria-hidden', 'true'));
             at_once.append(document.createTextNode(' ' + TEXT.atOnce[this.setting.lang] + '...'));
             at_once[0].addEventListener('click', (e) => {
                 $(`#${ID_PREFIX}-modal`).modal('show');
-                e.preventDefault();
             });
             dropdown_menu.append($('<li>').append(at_once));
         }
@@ -412,10 +414,7 @@ Launcher.prototype = {
         }
         else {
             //エラー情報を追加
-            let a = $('<a>', { href: '#', text: TEXT.loadingFailed[this.setting.lang] });
-            a.on('click', (e) => {
-                e.preventDefault();
-            });
+            let a = $('<a>', { text: TEXT.loadingFailed[this.setting.lang] });
             dropdown_menu.append($('<li>').append(a));
             console.log('[AtCoder Listing Tasks] Failed...');
         }
@@ -463,22 +462,18 @@ Launcher.prototype = {
         let select_begin = $('<div>', { class: `btn-group` });
         let begin_button = $('<button>', { text: 'A', class: `btn btn-default dropdown-toggle ${PRE}-toggle`, 'data-toggle': 'dropdown', 'aria-expanded': 'false' });
         begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));        
-        let begin_list = $('<ul>', { class: 'dropdown-menu' });
+        let begin_list = $('<ul>', { class: `dropdown-menu ${PRE}-list` });
         $.each(this.setting.problemList, (idx, data) => {
-            let a = $('<a>', { text: `${data.diff} - ${data.name}`, class: 'dropdown-item', href: '#', 'data-index': `${idx}` });
-            begin_list.append($('<li>').append(a));
+            begin_list.append($('<li>').append($('<a>', { text: `${data.diff} - ${data.name}`, 'data-index': (idx).toString() })));
         });
         select_begin.append(begin_button, begin_list);
         let select_end = select_begin.clone(true);
         
-        select_begin.find('a').each((idx, node) => {
-            node.addEventListener('click', { handleEvent: this.getProblemIndex, idx, setting: this.setting, button: begin_button, isBegin: true });
-        });
+        begin_list[0].addEventListener('click', { handleEvent: this.getProblemIndex, setting: this.setting, button: begin_button, isBegin: true });
+        let end_list = select_end.find('ul');
         let end_button = select_end.find('button');
-        select_end.find('a').each((idx, node) => {
-            node.addEventListener('click', { handleEvent: this.getProblemIndex, idx, setting: this.setting, button: end_button, isBegin: false });
-        });
-        
+        end_list[0].addEventListener('click', { handleEvent: this.getProblemIndex, setting: this.setting, button: end_button, isBegin: false });
+
         specify.append(select_begin, $('<span>', { text: '−', class: `${PRE}-between` }), select_end);
         
         option.append(all, specify);
@@ -499,13 +494,17 @@ Launcher.prototype = {
         $('#main-div').before(modal);
     },
     getProblemIndex: function (e) {
+        if(e.target.tagName !== 'A') {
+            return;
+        }
+        let idx = Number($(e.target).attr('data-index'));
         if(this.isBegin) {
-            this.setting.atOnce.begin = this.idx;
+            this.setting.atOnce.begin = idx;
         }
         else {
-            this.setting.atOnce.end = this.idx;
+            this.setting.atOnce.end = idx;
         }
-        this.button.html(`${this.setting.problemList[this.idx].diff}<span class="caret ${PRE}-caret"></span>`);
+        this.button.html(`${this.setting.problemList[idx].diff}<span class="caret ${PRE}-caret"></span>`);
     },
     
     launch: async function () {
