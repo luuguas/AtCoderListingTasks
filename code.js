@@ -21,6 +21,7 @@ let $ = window.jQuery;
 const CONTEST_URL = 'https://atcoder.jp/contests';
 const ID_PREFIX = 'userscript-ACLT';
 const PRE = 'ACLT';
+const ATONCE_TAB_MAX = 20;
 const CSS = `
 .${PRE}-dropdown {
     max-height: 890%;
@@ -269,8 +270,8 @@ Setting.prototype = {
                     setTasks.push(this.db.setData(STORE_NAME.problemList, { contestName: this.contestName, list: this.problemList, lastAccess: now }));
                 }
             }
-            this.atOnce.begin = 0;
-            this.atOnce.end = this.problemList.length - 1;
+            this.atOnce.begin = 30;
+            this.atOnce.end = 35;//this.problemList.length - 1;
             //情報を更新
             await Promise.all(setTasks);
         }
@@ -324,10 +325,14 @@ Setting.prototype = {
 /* スクリプト全体の動作を管理するクラス */
 let Launcher = function () {
     this.setting = new Setting();
-    this.atOnceTarget = {
+    this.dropdownList = {
         begin: null,
         end: null,
-    }
+    };
+    this.listChanged = {
+        begin: true,
+        end: true,
+    };
 };
 Launcher.prototype = {
     loadSetting: async function () {
@@ -446,17 +451,18 @@ Launcher.prototype = {
     addModal: function () {
         let modal = $('<div>', { id: `${ID_PREFIX}-modal`, class: 'modal fade', tabindex: '-1', role: 'dialog' });
         
-        //header
+        /* header */
         let header = $('<div>', { class: 'modal-header' });
         let x = $('<button>', { type: 'button', class: 'close', 'data-dismiss': 'modal', 'aria-label': 'Close' });
         x.append($('<span>', { 'aria-hidden': true, text: '×' }));
         header.append(x);
         header.append($('<h4>', { class: 'modal-title', text: TEXT.atOnce[this.setting.lang] }));
         
-        //body
+        /* body */
         let body = $('<div>', { class: 'modal-body' });
         body.append($('<p>', { text: TEXT.modalDiscription[this.setting.lang] }));
         
+        //ラジオボタン
         let option = $('<div>', { class: `${PRE}-option` });
         let all = $('<div>', { class: `${PRE}-flex ${PRE}-select-all` });
         let specify = $('<div>', { class: `${PRE}-flex ${PRE}-select-specify` });
@@ -471,6 +477,7 @@ Launcher.prototype = {
         all.append($('<div>', { class: `radio ${PRE}-ratio` }).append(label_all));
         specify.append($('<div>', { class: `radio ${PRE}-ratio` }).append(label_specify));
         
+        //[範囲を選択]用のドロップダウン
         let select_begin = $('<div>', { class: `btn-group` });
         let begin_button = $('<button>', { text: 'A', class: `btn btn-default dropdown-toggle ${PRE}-toggle`, 'data-toggle': 'dropdown', 'aria-expanded': 'false' });
         begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));        
@@ -484,61 +491,92 @@ Launcher.prototype = {
         let end_list = select_end.find('ul');
         let end_button = select_end.find('button');
         
-        begin_list[0].addEventListener('click', { handleEvent: this.getProblemIndex, setting: this.setting, atOnceTarget: this.atOnceTarget, button: begin_button, isBegin: true });
-        end_list[0].addEventListener('click', { handleEvent: this.getProblemIndex, setting: this.setting, atOnceTarget: this.atOnceTarget, button: end_button, isBegin: false });
-        
+        //初期表示の設定
         begin_button.html(`${this.setting.problemList[this.setting.atOnce.begin].diff}<span class="caret ${PRE}-caret"></span>`);
         end_button.html(`${this.setting.problemList[this.setting.atOnce.end].diff}<span class="caret ${PRE}-caret"></span>`);
-        this.atOnceTarget.begin = begin_list.find('a').eq(this.setting.atOnce.begin);
-        this.atOnceTarget.end = end_list.find('a').eq(this.setting.atOnce.end);
-        this.atOnceTarget.begin.addClass(`${PRE}-target`);
-        this.atOnceTarget.end.addClass(`${PRE}-target`);
+        this.dropdownList.begin = begin_list.find('a');
+        this.dropdownList.end = end_list.find('a');
+        this.dropdownList.begin.eq(this.setting.atOnce.begin).addClass(`${PRE}-target`);
+        this.dropdownList.end.eq(this.setting.atOnce.end).addClass(`${PRE}-target`);
         select_begin.on('shown.bs.dropdown', (e) => {
-            let top = 26 * (this.setting.atOnce.begin - 2);
-            begin_list.scrollTop(top);
+            if (this.listChanged.begin) {
+                begin_list.scrollTop(26 * (this.setting.atOnce.begin - 2));
+                this.listChanged.begin = false;
+            }
         });
         select_end.on('shown.bs.dropdown', (e) => {
-            let top = 26 * (this.setting.atOnce.end - 2);
-            end_list.scrollTop(top);
+            if (this.listChanged.end) {
+                end_list.scrollTop(26 * (this.setting.atOnce.end - 2));
+                this.listChanged.end = false;
+            }
         });
-
+        
+        //リストで選択したときの動作
+        begin_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, isBegin: true });
+        end_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, isBegin: false });
+        
+        //その他と組み立て
         specify.append(select_begin, $('<span>', { text: '−', class: `${PRE}-between` }), select_end);
         option.append(all, specify);
         body.append(option);
         body.append($('<p>', { text: '20 個のタブ' + TEXT.modalInfo[this.setting.lang] }));
         
-        //footer
+        /* footer */
         let footer = $('<div>', { class: 'modal-footer' });
         let cancel = $('<button>', { type: 'button', class: 'btn btn-default', 'data-dismiss': 'modal', text: TEXT.cancel[this.setting.lang] });
         let open = $('<button>', { type: 'button', class: 'btn btn-primary', text: TEXT.atOnce[this.setting.lang] });
         footer.append(cancel, open);
         
-        //モーダルウィンドウを追加
+        /* モーダルウィンドウを追加 */
         let dialog = $('<div>', { class: 'modal-dialog', role: 'document' });
         let content = $('<div>', { class: 'modal-content' });
         content.append(header, body, footer);
         modal.append(dialog.append(content));
         $('#main-div').before(modal);
     },
-    getProblemIndex: function (e) {
-        if(e.target.tagName !== 'A') {
+    changeRange: function (e) {
+        if (e.target.tagName !== 'A') {
             return;
         }
+        let atOnce = this.that.setting.atOnce;
         let idx = Number($(e.target).attr('data-index'));
-        if(this.isBegin) {
-            this.setting.atOnce.begin = idx;
-            this.atOnceTarget.begin.removeClass(`${PRE}-target`);
-            this.atOnceTarget.begin = $(e.target);
-            $(e.target).addClass(`${PRE}-target`);
+        if (this.isBegin) {
+            this.that.changeSelect(this.that, this.begin_button, idx, true);
+            if (atOnce.end < atOnce.begin) {
+                this.that.changeSelect(this.that, this.end_button, idx, false);
+            }
+            else if (atOnce.end >= atOnce.begin + ATONCE_TAB_MAX) {
+                this.that.changeSelect(this.that, this.end_button, idx + ATONCE_TAB_MAX - 1, false);
+            }
         }
         else {
-            this.setting.atOnce.end = idx;
-            this.atOnceTarget.end.removeClass(`${PRE}-target`);
-            this.atOnceTarget.end = $(e.target);
-            $(e.target).addClass(`${PRE}-target`);
+            this.that.changeSelect(this.that, this.end_button, idx, false);
+            if (atOnce.begin > atOnce.end) {
+                this.that.changeSelect(this.that, this.begin_button, idx, true);
+            }
+            if (atOnce.begin <= atOnce.end - ATONCE_TAB_MAX) {
+                this.that.changeSelect(this.that, this.begin_button, idx - ATONCE_TAB_MAX + 1, true);
+            }
         }
-        this.button.html(`${this.setting.problemList[idx].diff}<span class="caret ${PRE}-caret"></span>`);
     },
+    changeSelect: function (that, button, idx, isBegin) {
+        let problemList = that.setting.problemList;
+        let atOnce = that.setting.atOnce;
+        let dropdownList = that.dropdownList;
+        if (isBegin) {
+            dropdownList.begin.eq(atOnce.begin).removeClass(`${PRE}-target`);
+            atOnce.begin = idx;
+            dropdownList.begin.eq(idx).addClass(`${PRE}-target`);
+            that.listChanged.begin = true;
+        }
+        else {
+            dropdownList.end.eq(atOnce.end).removeClass(`${PRE}-target`);
+            atOnce.end = idx;
+            dropdownList.end.eq(idx).addClass(`${PRE}-target`);
+            that.listChanged.end = true;
+        }
+        button.html(`${problemList[idx].diff}<span class="caret ${PRE}-caret"></span>`);
+    },      
     
     launch: async function () {
         let tabExists = this.attachId();
