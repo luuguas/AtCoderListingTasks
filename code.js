@@ -58,12 +58,18 @@ const CSS = `
 .${PRE}-toggle {
     min-width: 50px;
 }
+.${PRE}-caret {
+    margin-left: 5px !important;
+}
 .${PRE}-list {
     max-height: 800%;
     overflow: visible auto;
 }
-.${PRE}-caret {
-    margin-left: 5px !important;
+.${PRE}-target {
+    background-color: #e0e0e0;
+}
+.${PRE}-target:hover {
+    background-color: #e0e0e0 !important;
 }
 .${PRE}-between {
     padding: 0px 5px;
@@ -263,6 +269,8 @@ Setting.prototype = {
                     setTasks.push(this.db.setData(STORE_NAME.problemList, { contestName: this.contestName, list: this.problemList, lastAccess: now }));
                 }
             }
+            this.atOnce.begin = 0;
+            this.atOnce.end = this.problemList.length - 1;
             //情報を更新
             await Promise.all(setTasks);
         }
@@ -316,6 +324,10 @@ Setting.prototype = {
 /* スクリプト全体の動作を管理するクラス */
 let Launcher = function () {
     this.setting = new Setting();
+    this.atOnceTarget = {
+        begin: null,
+        end: null,
+    }
 };
 Launcher.prototype = {
     loadSetting: async function () {
@@ -467,15 +479,30 @@ Launcher.prototype = {
             begin_list.append($('<li>').append($('<a>', { text: `${data.diff} - ${data.name}`, 'data-index': (idx).toString() })));
         });
         select_begin.append(begin_button, begin_list);
-        let select_end = select_begin.clone(true);
         
-        begin_list[0].addEventListener('click', { handleEvent: this.getProblemIndex, setting: this.setting, button: begin_button, isBegin: true });
+        let select_end = select_begin.clone(true);
         let end_list = select_end.find('ul');
         let end_button = select_end.find('button');
-        end_list[0].addEventListener('click', { handleEvent: this.getProblemIndex, setting: this.setting, button: end_button, isBegin: false });
+        
+        begin_list[0].addEventListener('click', { handleEvent: this.getProblemIndex, setting: this.setting, atOnceTarget: this.atOnceTarget, button: begin_button, isBegin: true });
+        end_list[0].addEventListener('click', { handleEvent: this.getProblemIndex, setting: this.setting, atOnceTarget: this.atOnceTarget, button: end_button, isBegin: false });
+        
+        begin_button.html(`${this.setting.problemList[this.setting.atOnce.begin].diff}<span class="caret ${PRE}-caret"></span>`);
+        end_button.html(`${this.setting.problemList[this.setting.atOnce.end].diff}<span class="caret ${PRE}-caret"></span>`);
+        this.atOnceTarget.begin = begin_list.find('a').eq(this.setting.atOnce.begin);
+        this.atOnceTarget.end = end_list.find('a').eq(this.setting.atOnce.end);
+        this.atOnceTarget.begin.addClass(`${PRE}-target`);
+        this.atOnceTarget.end.addClass(`${PRE}-target`);
+        select_begin.on('shown.bs.dropdown', (e) => {
+            let top = 26 * (this.setting.atOnce.begin - 2);
+            begin_list.scrollTop(top);
+        });
+        select_end.on('shown.bs.dropdown', (e) => {
+            let top = 26 * (this.setting.atOnce.end - 2);
+            end_list.scrollTop(top);
+        });
 
         specify.append(select_begin, $('<span>', { text: '−', class: `${PRE}-between` }), select_end);
-        
         option.append(all, specify);
         body.append(option);
         body.append($('<p>', { text: '20 個のタブ' + TEXT.modalInfo[this.setting.lang] }));
@@ -500,9 +527,15 @@ Launcher.prototype = {
         let idx = Number($(e.target).attr('data-index'));
         if(this.isBegin) {
             this.setting.atOnce.begin = idx;
+            this.atOnceTarget.begin.removeClass(`${PRE}-target`);
+            this.atOnceTarget.begin = $(e.target);
+            $(e.target).addClass(`${PRE}-target`);
         }
         else {
             this.setting.atOnce.end = idx;
+            this.atOnceTarget.end.removeClass(`${PRE}-target`);
+            this.atOnceTarget.end = $(e.target);
+            $(e.target).addClass(`${PRE}-target`);
         }
         this.button.html(`${this.setting.problemList[idx].diff}<span class="caret ${PRE}-caret"></span>`);
     },
