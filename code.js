@@ -94,6 +94,8 @@ const TEXT = {
     specify: { 'ja': '範囲を指定', 'en': 'Specify the range' },
     caution: { 'ja': `※一度に開くことのできるタブは ${ATONCE_TAB_MAX} 個までです。`, 'en': `*Up to ${ATONCE_TAB_MAX} tabs can be open at once.` },
     modalInfo: { 'ja': 'が開かれます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will be opened. (If pop-ups are blocked, please allow them.)' },
+    aTab: { 'ja': '個のタブ', 'en': 'tab ' },
+    tabs: { 'ja': '個のタブ', 'en': 'tabs ' },
 };
 
 const OLD_SETTING_KEY = 'Setting_AtCoderListingTasks';
@@ -471,6 +473,7 @@ Launcher.prototype = {
         /* body */
         let body = $('<div>', { class: 'modal-body' });
         body.append($('<p>', { text: TEXT.modalDiscription[this.setting.lang] }));
+        let modalInfo = $('<p>');
         
         //ラジオボタン
         let option = $('<div>', { class: `${PRE}-option` });
@@ -522,6 +525,7 @@ Launcher.prototype = {
         this.dropdownList.end = end_list.find('a');
         this.dropdownList.begin.eq(this.setting.atOnce.begin).addClass(`${PRE}-target`);
         this.dropdownList.end.eq(this.setting.atOnce.end).addClass(`${PRE}-target`);
+        this.setModalInfo(modalInfo, this.setting, this.isAll);
         
         //ラジオボタンを切り替えたときの動作
         radio_all.on('change', (e) => {
@@ -529,12 +533,14 @@ Launcher.prototype = {
             begin_button.prop('disabled', true);
             end_button.prop('disabled', true);
             between.addClass(`${PRE}-disabled`);
+            this.setModalInfo(modalInfo, this.setting, this.isAll);
         });
         radio_specify.on('change', (e) => {
             this.isAll = false;
             begin_button.prop('disabled', false);
             end_button.prop('disabled', false);
             between.removeClass(`${PRE}-disabled`);
+            this.setModalInfo(modalInfo, this.setting, this.isAll);
         });
         
         //リストを開いたときの動作
@@ -552,14 +558,14 @@ Launcher.prototype = {
         });
         
         //リストで選択したときの動作
-        begin_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, isBegin: true });
-        end_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, isBegin: false });
+        begin_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, modalInfo, isBegin: true });
+        end_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, modalInfo, isBegin: false });
         
         //組み立て
         specify.append(select_begin, between, select_end);
         option.append(all, specify);
         body.append(option);
-        body.append($('<p>', { text: '20 個のタブ' + TEXT.modalInfo[this.setting.lang] }));
+        body.append(modalInfo);
         
         /* footer */
         let footer = $('<div>', { class: 'modal-footer' });
@@ -598,6 +604,7 @@ Launcher.prototype = {
                 this.that.changeSelect(this.that, this.begin_button, idx - ATONCE_TAB_MAX + 1, true);
             }
         }
+        this.that.setModalInfo(this.modalInfo, this.that.setting, this.that.isAll);
     },
     changeSelect: function (that, button, idx, isBegin) {
         let problemList = that.setting.problemList;
@@ -616,7 +623,32 @@ Launcher.prototype = {
             that.listChanged.end = true;
         }
         button.html(`${problemList[idx].diff}<span class="caret ${PRE}-caret"></span>`);
-    },      
+    },
+    setModalInfo: function (modalInfo, setting, isAll) {
+        let text = '';
+        if (isAll) {
+            text += (setting.problemList.length).toString();
+            text += ' ';
+            if (setting.problemList.length === 1) {
+                text += TEXT.aTab[setting.lang];
+            }
+            else {
+                text += TEXT.tabs[setting.lang];
+            }
+        }
+        else {
+            text += (setting.atOnce.end - setting.atOnce.begin + 1).toString();
+            text += ' ';
+            if (setting.atOnce.end === setting.atOnce.begin) {
+                text += TEXT.aTab[setting.lang];
+            }
+            else {
+                text += TEXT.tabs[setting.lang];
+            }
+        }
+        text += TEXT.modalInfo[setting.lang];
+        modalInfo.text(text);
+    },
     
     launch: async function () {
         let tabExists = this.attachId();
