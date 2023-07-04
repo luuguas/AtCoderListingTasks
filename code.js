@@ -53,9 +53,16 @@ const CSS = `
 .${PRE}-select-specify {
     height: 35px;
 }
-.${PRE}-ratio {
+.${PRE}-radio {
     padding: 0px 15px 0px 10px;
 }
+.${PRE}-disabled {
+    opacity: 0.65; 
+}
+.${PRE}-caution {
+    margin-left: 15px;
+    color: red;
+},
 .${PRE}-toggle {
     min-width: 50px;
 }
@@ -85,6 +92,7 @@ const TEXT = {
     cancel: { 'ja': 'キャンセル', 'en': 'Cancel' },
     all: { 'ja': 'すべて', 'en': 'All' },
     specify: { 'ja': '範囲を指定', 'en': 'Specify the range' },
+    caution: { 'ja': `※一度に開くことのできるタブは ${ATONCE_TAB_MAX} 個までです。`, 'en': `*Up to ${ATONCE_TAB_MAX} tabs can be open at once.` },
     modalInfo: { 'ja': 'が開かれます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will be opened. (If pop-ups are blocked, please allow them.)' },
 };
 
@@ -270,8 +278,9 @@ Setting.prototype = {
                     setTasks.push(this.db.setData(STORE_NAME.problemList, { contestName: this.contestName, list: this.problemList, lastAccess: now }));
                 }
             }
-            this.atOnce.begin = 30;
-            this.atOnce.end = 35;//this.problemList.length - 1;
+            this.atOnce.begin = 0;
+            this.atOnce.end = Math.min(ATONCE_TAB_MAX - 1, this.problemList.length - 1);
+            
             //情報を更新
             await Promise.all(setTasks);
         }
@@ -322,7 +331,7 @@ Setting.prototype = {
     },
 };
 
-/* スクリプト全体の動作を管理するクラス */
+/* DOM操作およびスクリプト全体の動作を管理するクラス */
 let Launcher = function () {
     this.setting = new Setting();
     this.dropdownList = {
@@ -333,6 +342,7 @@ let Launcher = function () {
         begin: true,
         end: true,
     };
+    this.isAll = true;
 };
 Launcher.prototype = {
     loadSetting: async function () {
@@ -393,7 +403,7 @@ Launcher.prototype = {
             dropdown_menu.append($('<li>').append(at_once));
         }
         
-        /* [[✓]新しいタブで開く]の追加 */
+        /* [新しいタブで開く]の追加 */
         let label = $('<label>', { class: `${PRE}-label` });
         label.css('color', all_tasks.css('color')); //[問題一覧]から色情報を取得
         let checkbox = $('<input>', { type: 'checkbox', class: `${PRE}-checkbox` });
@@ -466,20 +476,33 @@ Launcher.prototype = {
         let option = $('<div>', { class: `${PRE}-option` });
         let all = $('<div>', { class: `${PRE}-flex ${PRE}-select-all` });
         let specify = $('<div>', { class: `${PRE}-flex ${PRE}-select-specify` });
-        let label_all = $('<label>');
-        let ratio_all = $('<input>', { type: 'radio', name: 'open-type' });
+        let label_all = $('<label>', { class: `${PRE}-label-radio` });
+        let radio_all = $('<input>', { type: 'radio', name: 'open-type' });
         let label_specify = label_all.clone(true);
-        let ratio_specify = ratio_all.clone(true);
+        let radio_specify = radio_all.clone(true);
         
-        ratio_all.prop('checked', true);
-        label_all.append(ratio_all, document.createTextNode(TEXT.all[this.setting.lang]));
-        label_specify.append(ratio_specify, document.createTextNode(TEXT.specify[this.setting.lang] + ':'));
-        all.append($('<div>', { class: `radio ${PRE}-ratio` }).append(label_all));
-        specify.append($('<div>', { class: `radio ${PRE}-ratio` }).append(label_specify));
+        if (this.setting.atOnce.begin === 0 && this.setting.atOnce.end === this.setting.problemList.length - 1) {
+            this.isAll = true;
+        }
+        else {
+            this.isAll = false;
+        }
+        radio_all.prop('checked', this.isAll);
+        radio_specify.prop('checked', !this.isAll);
+        label_all.append(radio_all, document.createTextNode(TEXT.all[this.setting.lang]));
+        label_specify.append(radio_specify, document.createTextNode(TEXT.specify[this.setting.lang] + ':'));
+        let caution = $('<span>', { class: `${PRE}-caution` });
+        if (this.setting.problemList.length > ATONCE_TAB_MAX) {
+            radio_all.prop('disabled', true);
+            label_all.addClass(`${PRE}-disabled`);
+            caution.text(TEXT.caution[this.setting.lang]);
+        }
+        all.append($('<div>', { class: `radio ${PRE}-radio` }).append(label_all, caution));
+        specify.append($('<div>', { class: `radio ${PRE}-radio` }).append(label_specify));
         
         //[範囲を選択]用のドロップダウン
         let select_begin = $('<div>', { class: `btn-group` });
-        let begin_button = $('<button>', { text: 'A', class: `btn btn-default dropdown-toggle ${PRE}-toggle`, 'data-toggle': 'dropdown', 'aria-expanded': 'false' });
+        let begin_button = $('<button>', { class: `btn btn-default dropdown-toggle ${PRE}-toggle`, 'data-toggle': 'dropdown', 'aria-expanded': 'false', text: 'A', disabled: this.isAll });
         begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));        
         let begin_list = $('<ul>', { class: `dropdown-menu ${PRE}-list` });
         $.each(this.setting.problemList, (idx, data) => {
@@ -490,6 +513,7 @@ Launcher.prototype = {
         let select_end = select_begin.clone(true);
         let end_list = select_end.find('ul');
         let end_button = select_end.find('button');
+        let between = $('<span>', { text: '−', class: `${PRE}-between` });
         
         //初期表示の設定
         begin_button.html(`${this.setting.problemList[this.setting.atOnce.begin].diff}<span class="caret ${PRE}-caret"></span>`);
@@ -498,6 +522,22 @@ Launcher.prototype = {
         this.dropdownList.end = end_list.find('a');
         this.dropdownList.begin.eq(this.setting.atOnce.begin).addClass(`${PRE}-target`);
         this.dropdownList.end.eq(this.setting.atOnce.end).addClass(`${PRE}-target`);
+        
+        //ラジオボタンを切り替えたときの動作
+        radio_all.on('change', (e) => {
+            this.isAll = true;
+            begin_button.prop('disabled', true);
+            end_button.prop('disabled', true);
+            between.addClass(`${PRE}-disabled`);
+        });
+        radio_specify.on('change', (e) => {
+            this.isAll = false;
+            begin_button.prop('disabled', false);
+            end_button.prop('disabled', false);
+            between.removeClass(`${PRE}-disabled`);
+        });
+        
+        //リストを開いたときの動作
         select_begin.on('shown.bs.dropdown', (e) => {
             if (this.listChanged.begin) {
                 begin_list.scrollTop(26 * (this.setting.atOnce.begin - 2));
@@ -515,8 +555,8 @@ Launcher.prototype = {
         begin_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, isBegin: true });
         end_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, isBegin: false });
         
-        //その他と組み立て
-        specify.append(select_begin, $('<span>', { text: '−', class: `${PRE}-between` }), select_end);
+        //組み立て
+        specify.append(select_begin, between, select_end);
         option.append(all, specify);
         body.append(option);
         body.append($('<p>', { text: '20 個のタブ' + TEXT.modalInfo[this.setting.lang] }));
