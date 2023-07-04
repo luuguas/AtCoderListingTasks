@@ -62,9 +62,9 @@ const CSS = `
 .${PRE}-caution {
     margin-left: 15px;
     color: red;
-},
+}
 .${PRE}-toggle {
-    min-width: 50px;
+    min-width: 55px;
 }
 .${PRE}-caret {
     margin-left: 5px !important;
@@ -571,6 +571,26 @@ Launcher.prototype = {
         let footer = $('<div>', { class: 'modal-footer' });
         let cancel = $('<button>', { type: 'button', class: 'btn btn-default', 'data-dismiss': 'modal', text: TEXT.cancel[this.setting.lang] });
         let open = $('<button>', { type: 'button', class: 'btn btn-primary', text: TEXT.atOnce[this.setting.lang] });
+        open.on('click', (e) => {
+            let blank = window.open('about:blank'); //ポップアップブロック用
+            let idx = null;
+            if (this.isAll) {
+                idx = this.setting.problemList.length - 1;
+                while (idx >= 0) {
+                    window.open(this.setting.problemList[idx].url, '_blank', 'popup, noopener, noreferrer');
+                    --idx;
+                }
+            }
+            else {
+                idx = this.setting.atOnce.end;
+                while (idx >= this.setting.atOnce.begin) {
+                    window.open(this.setting.problemList[idx].url, '_blank', 'popup, noopener, noreferrer');
+                    --idx;
+                }
+            }
+            modal.modal('hide');
+            blank.close();
+        });
         footer.append(cancel, open);
         
         /* モーダルウィンドウを追加 */
@@ -649,6 +669,7 @@ Launcher.prototype = {
         text += TEXT.modalInfo[setting.lang];
         modalInfo.text(text);
     },
+    
     
     launch: async function () {
         let tabExists = this.attachId();
