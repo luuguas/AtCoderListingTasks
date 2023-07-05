@@ -6,6 +6,7 @@
 // @description:en Click [Tasks] tab to open a drop-down list linked to each task.
 // @author         luuguas
 // @license        Apache-2.0
+// @supportURL     https://github.com/luuguas/AtCoderListingTasks/issues
 // @match          https://atcoder.jp/contests/*
 // @exclude        https://atcoder.jp/contests/
 // @exclude        https://atcoder.jp/contests/?*
