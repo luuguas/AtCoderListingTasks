@@ -8,7 +8,7 @@
 // @license        Apache-2.0
 // @match          https://atcoder.jp/contests/*
 // @exclude        https://atcoder.jp/contests/
-// @exclude        https://atcoder.jp/contests/archive
+// @exclude        https://atcoder.jp/contests/archive*
 // @grant          none
 // ==/UserScript==
 
