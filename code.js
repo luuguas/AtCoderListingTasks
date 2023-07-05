@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name           AtCoder Listing Tasks(Debug)
+// @name           AtCoder Listing Tasks
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
-// @version        1.4
+// @version        1.5
 // @description    [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 // @description:en Click [Tasks] tab to open a drop-down list linked to each task.
 // @author         luuguas
@@ -22,7 +22,10 @@ let $ = window.jQuery;
 const CONTEST_URL = 'https://atcoder.jp/contests';
 const ID_PREFIX = 'userscript-ACLT';
 const PRE = 'ACLT';
+const CONTEST_REGULAR = ['abc', 'arc', 'agc', 'ahc', 'past', 'joi', 'jag'];
+const CONTEST_PERMANENT = ['practice', 'APG4b', 'abs', 'practice2', 'typical90', 'math-and-algorithm', 'tessoku-book'];
 const ATONCE_TAB_MAX = 20;
+
 const CSS = `
 .${PRE}-dropdown {
     max-height: 890%;
@@ -188,14 +191,17 @@ IDBManager.prototype = {
 
 /* 設定や問題リストの読み込み・保存をするクラス */
 let Setting = function () {
-    this.newTab = null;
     this.problemList = null;
+    this.newTab = null;
+    this.lastRemove = null;
+    this.atOnceSetting = null;
     this.atOnce = {
         begin: 0,
         end: 0,
     };
     this.lang = null;
     this.contestName = null;
+    this.contestCategory = null;
     
     this.db = new IDBManager(DB_NAME);
     this.dbExists = false;
@@ -206,7 +212,7 @@ Setting.prototype = {
             await this.db.openDatabase(STORE_INFO, DB_VERSION);
         }
         catch (err) {
-            console.error(err);
+            console.warn('[AtCoder Listing Tasks] ' + err);
         }
         this.dbExists = this.db.isOpened();
     },
@@ -248,7 +254,8 @@ Setting.prototype = {
             let resArray = await Promise.all([
                 this.db.getData(STORE_NAME.problemList, this.contestName),
                 this.db.getData(STORE_NAME.option, 'newTab'),
-                this.db.getData(STORE_NAME.option, 'lastRemove')
+                this.db.getData(STORE_NAME.option, 'lastRemove'),
+                this.db.getData(STORE_NAME.option, 'atOnce')
             ]);
             let setTasks = [];
             let now = Date.now();
@@ -267,6 +274,13 @@ Setting.prototype = {
                 this.lastRemove = now;
                 setTasks.push(this.db.setData(STORE_NAME.option, { name: 'lastRemove', value: this.lastRemove }));
             }
+            if (resArray[3] !== null) {
+                this.atOnceSetting = resArray[3].value;
+            }
+            else {
+                this.atOnceSetting = {};
+                setTasks.push(this.db.setData(STORE_NAME.option, { name: 'atOnce', value: {} }));
+            }
             //問題リストを格納
             if (resArray[0] !== null) {
                 this.problemList = resArray[0].list;
@@ -281,18 +295,21 @@ Setting.prototype = {
                     setTasks.push(this.db.setData(STORE_NAME.problemList, { contestName: this.contestName, list: this.problemList, lastAccess: now }));
                 }
             }
-            this.atOnce.begin = 0;
-            this.atOnce.end = Math.min(ATONCE_TAB_MAX - 1, this.problemList.length - 1);
             
             //情報を更新
             await Promise.all(setTasks);
         }
         else {
-            this.newTab = false;
             this.problemList = await this.requestList(this.contestName);
+            this.newTab = false;
+            this.lastRemove = null;
+            this.atOnceSetting = {};
         }
     },
     saveData: async function (name, value) {
+        if (!this.dbExists) {
+            return;
+        }
         await this.db.setData(STORE_NAME.option, { name, value });
     },
     removeOldData: async function () {
@@ -332,6 +349,40 @@ Setting.prototype = {
             this.contestName = this.contestName.slice(0, hash);
         }
     },
+    getContestCategoryAndAtOnce: function () {
+        //コンテストの種類を取得
+        let got = false;
+        if (!got) {
+            for (let category of CONTEST_REGULAR) {
+                if (this.contestName.startsWith(category)) {
+                    this.contestCategory = category + '-' + (this.problemList.length).toString();
+                    got = true;
+                    break;
+                }
+            }
+        }
+        if (!got) {
+            for (let category of CONTEST_PERMANENT) {
+                if (this.contestName.startsWith(category)) {
+                    this.contestCategory = category;
+                    got = true;
+                    break;
+                }
+            }
+        }
+        if (!got) {
+            this.contestCategory = 'other';
+        }
+        
+        //atOnceの設定
+        if (this.atOnceSetting[this.contestCategory]) {
+            this.atOnce = this.atOnceSetting[this.contestCategory];
+        }
+        else {
+            this.atOnce.begin = 0;
+            this.atOnce.end = Math.min(ATONCE_TAB_MAX - 1, this.problemList.length - 1);
+        }
+    },
 };
 
 /* DOM操作およびスクリプト全体の動作を管理するクラス */
@@ -352,6 +403,8 @@ Launcher.prototype = {
         this.setting.getContestName();
         await this.setting.openDB();
         await this.setting.loadData();
+        this.setting.getLanguage();
+        this.setting.getContestCategoryAndAtOnce();
     },
     attachId: function () {
         let tabs = $('#contest-nav-tabs');
@@ -440,13 +493,11 @@ Launcher.prototype = {
                 a[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, setting: this.setting });
                 dropdown_menu.append($('<li>').append(a));
             }
-            console.log('[AtCoder Listing Tasks] Succeeded!');
         }
         else {
             //エラー情報を追加
             let a = $('<a>', { text: TEXT.loadingFailed[this.setting.lang] });
             dropdown_menu.append($('<li>').append(a));
-            console.log('[AtCoder Listing Tasks] Failed...');
         }
     },
     changeNewTabAttr: function (e) {
@@ -462,6 +513,9 @@ Launcher.prototype = {
     },
     
     addModal: function () {
+        if (this.setting.problemList === null) {
+            return;
+        }
         let modal = $('<div>', { id: `${ID_PREFIX}-modal`, class: 'modal fade', tabindex: '-1', role: 'dialog' });
         
         /* header */
@@ -573,6 +627,19 @@ Launcher.prototype = {
         let cancel = $('<button>', { type: 'button', class: 'btn btn-default', 'data-dismiss': 'modal', text: TEXT.cancel[this.setting.lang] });
         let open = $('<button>', { type: 'button', class: 'btn btn-primary', text: TEXT.atOnce[this.setting.lang] });
         open.on('click', (e) => {
+            //設定を保存
+            if (this.setting.contestCategory !== 'other') {
+                if (this.isAll) {
+                    this.setting.atOnceSetting[this.setting.contestCategory].begin = 0;
+                    this.setting.atOnceSetting[this.setting.contestCategory].end = this.setting.problemList.length - 1;
+                }
+                else {
+                    this.setting.atOnceSetting[this.setting.contestCategory] = this.setting.atOnce;
+                }
+                this.setting.saveData('atOnce', this.setting.atOnceSetting);
+            }
+            
+            //タブを開く
             let blank = window.open('about:blank'); //ポップアップブロック用
             let idx = null;
             if (this.isAll) {
@@ -681,7 +748,6 @@ Launcher.prototype = {
         }
         
         await this.loadSetting();
-        this.setting.getLanguage();
         this.addCss();
         this.changeToDropdown();
         this.addList();
@@ -690,6 +756,13 @@ Launcher.prototype = {
         
         window.localStorage.removeItem(OLD_SETTING_KEY);
         await this.setting.removeOldData();
+        
+        if (this.setting.problemList !== null) {
+            console.log('[AtCoder Listing Tasks] Succeeded!');
+        }
+        else {
+            console.warn('[AtCoder Listing Tasks] Failed...');
+        }
     },
 };
 
