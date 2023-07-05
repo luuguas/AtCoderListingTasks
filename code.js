@@ -61,7 +61,7 @@ const CSS = `
     padding: 0px 15px 0px 10px;
 }
 .${PRE}-disabled {
-    opacity: 0.65; 
+    opacity: 0.65;
 }
 .${PRE}-caution {
     margin-left: 15px;
@@ -102,7 +102,6 @@ const TEXT = {
     tabs: { 'ja': '個のタブ', 'en': 'tabs ' },
 };
 
-const OLD_SETTING_KEY = 'Setting_AtCoderListingTasks';
 const DB_NAME = 'UserScript_ACLT_Database';
 const DB_VERSION = 1;
 const STORE_NAME = { option: 'option', problemList: 'problemList' };
@@ -321,7 +320,7 @@ Setting.prototype = {
             return;
         }
         //最終アクセスが現在時刻より一定以上前の問題リストを削除する
-        let oldData = await this.db.getAllMatchedData(STORE_NAME.problemList, (data) => {return now - data.lastAccess >= REMOVE_BASE; });
+        let oldData = await this.db.getAllMatchedData(STORE_NAME.problemList, (data) => { return now - data.lastAccess >= REMOVE_BASE; });
         if (oldData.length !== 0) {
             let deleteTasks = [];
             for (let data of oldData) {
@@ -415,7 +414,7 @@ Launcher.prototype = {
         if (tasks_tab.length === 0) {
             return false;
         }
-        else{
+        else {
             tasks_tab.attr('id', `${ID_PREFIX}-tab`);
             return true;
         }
@@ -439,7 +438,7 @@ Launcher.prototype = {
     },
     addList: function () {
         let dropdown_menu = $(`#${ID_PREFIX}-tab`).parent().children('.dropdown-menu');
-    
+        
         /* [問題一覧]の追加 */
         let all_tasks = $('<a>', { href: `${CONTEST_URL}/${this.setting.contestName}/tasks` });
         all_tasks.append($('<span>', { class: 'glyphicon glyphicon-list' }).attr('aria-hidden', 'true'));
@@ -561,7 +560,7 @@ Launcher.prototype = {
         //[範囲を選択]用のドロップダウン
         let select_begin = $('<div>', { class: `btn-group` });
         let begin_button = $('<button>', { class: `btn btn-default dropdown-toggle ${PRE}-toggle`, 'data-toggle': 'dropdown', 'aria-expanded': 'false', text: 'A', disabled: this.isAll });
-        begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));        
+        begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));
         let begin_list = $('<ul>', { class: `dropdown-menu ${PRE}-list` });
         $.each(this.setting.problemList, (idx, data) => {
             begin_list.append($('<li>').append($('<a>', { text: `${data.diff} - ${data.name}`, 'data-index': (idx).toString() })));
@@ -738,7 +737,6 @@ Launcher.prototype = {
         modalInfo.text(text);
     },
     
-    
     launch: async function () {
         let tabExists = this.attachId();
         //タブがない場合は終了
@@ -754,7 +752,6 @@ Launcher.prototype = {
         
         this.addModal();
         
-        window.localStorage.removeItem(OLD_SETTING_KEY);
         await this.setting.removeOldData();
         
         if (this.setting.problemList !== null) {
