@@ -361,6 +361,9 @@ Setting.prototype = {
         }
     },
     getContestCategoryAndAtOnce: function () {
+        if (this.problemList === null) {
+            return;
+        }
         //コンテストの種類を取得
         let got = false;
         if (!got) {
@@ -654,6 +657,7 @@ Launcher.prototype = {
             //設定を保存
             this.setting.saveData('reverse', this.setting.reverse);
             if (this.setting.contestCategory !== 'other') {
+                this.setting.atOnceSetting[this.setting.contestCategory] = {};
                 if (this.isAll) {
                     this.setting.atOnceSetting[this.setting.contestCategory].begin = 0;
                     this.setting.atOnceSetting[this.setting.contestCategory].end = this.setting.problemList.length - 1;
