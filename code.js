@@ -46,7 +46,7 @@ const CSS = `
 }
 
 .${PRE}-option {
-    margin: 5px 0px 15px;
+    margin: 5px 0px 15px 10px;
 }
 .${PRE}-flex {
     display: flex;
@@ -59,7 +59,7 @@ const CSS = `
     height: 35px;
 }
 .${PRE}-radio {
-    padding: 0px 15px 0px 10px;
+    padding-right: 15px;
 }
 .${PRE}-disabled {
     opacity: 0.65;
@@ -98,6 +98,7 @@ const TEXT = {
     all: { 'ja': 'すべて', 'en': 'All' },
     specify: { 'ja': '範囲を指定', 'en': 'Specify the range' },
     caution: { 'ja': `※一度に開くことのできるタブは ${ATONCE_TAB_MAX} 個までです。`, 'en': `*Up to ${ATONCE_TAB_MAX} tabs can be open at once.` },
+    reverse: { 'ja': '逆順で開く', 'en': 'Open in reverse order' },
     modalInfo: { 'ja': 'が開かれます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will be opened. (If pop-ups are blocked, please allow them.)' },
     aTab: { 'ja': '個のタブ', 'en': 'tab ' },
     tabs: { 'ja': '個のタブ', 'en': 'tabs ' },
@@ -194,6 +195,7 @@ let Setting = function () {
     this.problemList = null;
     this.newTab = null;
     this.lastRemove = null;
+    this.reverse = null;
     this.atOnceSetting = null;
     this.atOnce = {
         begin: 0,
@@ -255,7 +257,8 @@ Setting.prototype = {
                 this.db.getData(STORE_NAME.problemList, this.contestName),
                 this.db.getData(STORE_NAME.option, 'newTab'),
                 this.db.getData(STORE_NAME.option, 'lastRemove'),
-                this.db.getData(STORE_NAME.option, 'atOnce')
+                this.db.getData(STORE_NAME.option, 'atOnce'),
+                this.db.getData(STORE_NAME.option, 'reverse')
             ]);
             let setTasks = [];
             let now = Date.now();
@@ -281,6 +284,13 @@ Setting.prototype = {
                 this.atOnceSetting = {};
                 setTasks.push(this.db.setData(STORE_NAME.option, { name: 'atOnce', value: {} }));
             }
+            if (resArray[4] !== null) {
+                this.reverse = resArray[4].value;
+            }
+            else {
+                this.reverse = false;
+                setTasks.push(this.db.setData(STORE_NAME.option, { name: 'reverse', value: false }));
+            }
             //問題リストを格納
             if (resArray[0] !== null) {
                 this.problemList = resArray[0].list;
@@ -304,6 +314,7 @@ Setting.prototype = {
             this.newTab = false;
             this.lastRemove = null;
             this.atOnceSetting = {};
+            this.reverse = false;
         }
     },
     saveData: async function (name, value) {
@@ -313,10 +324,10 @@ Setting.prototype = {
         await this.db.setData(STORE_NAME.option, { name, value });
     },
     removeOldData: async function () {
-        let now = Date.now();
         if (!this.dbExists) {
             return;
         }
+        let now = Date.now();
         if (now - this.lastRemove < REMOVE_INTERVAL) {
             return;
         }
@@ -530,8 +541,9 @@ Launcher.prototype = {
         body.append($('<p>', { text: TEXT.modalDiscription[this.setting.lang] }));
         let modalInfo = $('<p>');
         
-        //ラジオボタン
         let option = $('<div>', { class: `${PRE}-option` });
+        
+        //ラジオボタン
         let all = $('<div>', { class: `${PRE}-flex ${PRE}-select-all` });
         let specify = $('<div>', { class: `${PRE}-flex ${PRE}-select-specify` });
         let label_all = $('<label>', { class: `${PRE}-label-radio` });
@@ -616,9 +628,21 @@ Launcher.prototype = {
         begin_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, modalInfo, isBegin: true });
         end_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, modalInfo, isBegin: false });
         
-        //組み立て
         specify.append(select_begin, between, select_end);
-        option.append(all, specify);
+        
+        //[逆順で開く]チェックボックス
+        let reverse = $('<div>', { class: 'checkbox' });
+        let label_reverse = $('<label>');
+        let check_reverse = $('<input>', { type: 'checkbox', name: 'reverse' });
+        check_reverse.prop('checked', this.setting.reverse);
+        check_reverse.on('click', (e) => {
+            this.setting.reverse = e.currentTarget.checked;
+        });
+        label_reverse.append(check_reverse, document.createTextNode(TEXT.reverse[this.setting.lang]));
+        reverse.append(label_reverse);
+        
+        //組み立て
+        option.append(all, specify, reverse);
         body.append(option);
         body.append(modalInfo);
         
@@ -628,6 +652,7 @@ Launcher.prototype = {
         let open = $('<button>', { type: 'button', class: 'btn btn-primary', text: TEXT.atOnce[this.setting.lang] });
         open.on('click', (e) => {
             //設定を保存
+            this.setting.saveData('reverse', this.setting.reverse);
             if (this.setting.contestCategory !== 'other') {
                 if (this.isAll) {
                     this.setting.atOnceSetting[this.setting.contestCategory].begin = 0;
@@ -643,17 +668,35 @@ Launcher.prototype = {
             let blank = window.open('about:blank'); //ポップアップブロック用
             let idx = null;
             if (this.isAll) {
-                idx = this.setting.problemList.length - 1;
-                while (idx >= 0) {
-                    window.open(this.setting.problemList[idx].url, '_blank', 'popup, noopener, noreferrer');
-                    --idx;
+                if (!this.setting.reverse) {
+                    idx = 0;
+                    while (idx <= this.setting.problemList.length - 1) {
+                        window.open(this.setting.problemList[idx].url, '_blank', 'noopener, noreferrer');
+                        ++idx;
+                    }
+                }
+                else {
+                    idx = this.setting.problemList.length - 1;
+                    while (idx >= 0) {
+                        window.open(this.setting.problemList[idx].url, '_blank', 'noopener, noreferrer');
+                        --idx;
+                    }
                 }
             }
             else {
-                idx = this.setting.atOnce.end;
-                while (idx >= this.setting.atOnce.begin) {
-                    window.open(this.setting.problemList[idx].url, '_blank', 'popup, noopener, noreferrer');
-                    --idx;
+                if (!this.setting.reverse) {
+                    idx = this.setting.atOnce.begin;
+                    while (idx <= this.setting.atOnce.end) {
+                        window.open(this.setting.problemList[idx].url, '_blank', 'noopener, noreferrer');
+                        ++idx;
+                    }
+                }
+                else {
+                    idx = this.setting.atOnce.end;
+                    while (idx >= this.setting.atOnce.begin) {
+                        window.open(this.setting.problemList[idx].url, '_blank', 'noopener, noreferrer');
+                        --idx;
+                    }
                 }
             }
             modal.modal('hide');
@@ -740,7 +783,7 @@ Launcher.prototype = {
     
     launch: async function () {
         let tabExists = this.attachId();
-        //タブがない場合は終了
+        //[問題]タブがない場合は終了
         if (!tabExists) {
             console.log('[AtCoder Listing Tasks] [Tasks] Tab isn\'t exist.');
             return;
