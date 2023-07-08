@@ -1,14 +1,16 @@
 // ==UserScript==
-// @name           AtCoder Listing Tasks(Debug)
+// @name           AtCoder Listing Tasks
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
-// @version        1.4
+// @version        1.5
 // @description    [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 // @description:en Click [Tasks] tab to open a drop-down list linked to each task.
 // @author         luuguas
 // @license        Apache-2.0
+// @supportURL     https://github.com/luuguas/AtCoderListingTasks/issues
 // @match          https://atcoder.jp/contests/*
 // @exclude        https://atcoder.jp/contests/
-// @exclude        https://atcoder.jp/contests/archive
+// @exclude        https://atcoder.jp/contests/?*
+// @exclude        https://atcoder.jp/contests/archive*
 // @grant          none
 // ==/UserScript==
 
@@ -21,7 +23,10 @@ let $ = window.jQuery;
 const CONTEST_URL = 'https://atcoder.jp/contests';
 const ID_PREFIX = 'userscript-ACLT';
 const PRE = 'ACLT';
+const CONTEST_REGULAR = ['abc', 'arc', 'agc', 'ahc', 'past', 'joi', 'jag'];
+const CONTEST_PERMANENT = ['practice', 'APG4b', 'abs', 'practice2', 'typical90', 'math-and-algorithm', 'tessoku-book'];
 const ATONCE_TAB_MAX = 20;
+
 const CSS = `
 .${PRE}-dropdown {
     max-height: 890%;
@@ -41,7 +46,7 @@ const CSS = `
 }
 
 .${PRE}-option {
-    margin: 5px 0px 15px;
+    margin: 5px 0px 15px 10px;
 }
 .${PRE}-flex {
     display: flex;
@@ -54,10 +59,10 @@ const CSS = `
     height: 35px;
 }
 .${PRE}-radio {
-    padding: 0px 15px 0px 10px;
+    padding-right: 15px;
 }
 .${PRE}-disabled {
-    opacity: 0.65; 
+    opacity: 0.65;
 }
 .${PRE}-caution {
     margin-left: 15px;
@@ -93,12 +98,12 @@ const TEXT = {
     all: { 'ja': 'すべて', 'en': 'All' },
     specify: { 'ja': '範囲を指定', 'en': 'Specify the range' },
     caution: { 'ja': `※一度に開くことのできるタブは ${ATONCE_TAB_MAX} 個までです。`, 'en': `*Up to ${ATONCE_TAB_MAX} tabs can be open at once.` },
+    reverse: { 'ja': '逆順で開く', 'en': 'Open in reverse order' },
     modalInfo: { 'ja': 'が開かれます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will be opened. (If pop-ups are blocked, please allow them.)' },
     aTab: { 'ja': '個のタブ', 'en': 'tab ' },
     tabs: { 'ja': '個のタブ', 'en': 'tabs ' },
 };
 
-const OLD_SETTING_KEY = 'Setting_AtCoderListingTasks';
 const DB_NAME = 'UserScript_ACLT_Database';
 const DB_VERSION = 1;
 const STORE_NAME = { option: 'option', problemList: 'problemList' };
@@ -187,14 +192,18 @@ IDBManager.prototype = {
 
 /* 設定や問題リストの読み込み・保存をするクラス */
 let Setting = function () {
-    this.newTab = null;
     this.problemList = null;
+    this.newTab = null;
+    this.lastRemove = null;
+    this.reverse = null;
+    this.atOnceSetting = null;
     this.atOnce = {
         begin: 0,
         end: 0,
     };
     this.lang = null;
     this.contestName = null;
+    this.contestCategory = null;
     
     this.db = new IDBManager(DB_NAME);
     this.dbExists = false;
@@ -205,7 +214,7 @@ Setting.prototype = {
             await this.db.openDatabase(STORE_INFO, DB_VERSION);
         }
         catch (err) {
-            console.error(err);
+            console.warn('[AtCoder Listing Tasks] ' + err);
         }
         this.dbExists = this.db.isOpened();
     },
@@ -247,7 +256,9 @@ Setting.prototype = {
             let resArray = await Promise.all([
                 this.db.getData(STORE_NAME.problemList, this.contestName),
                 this.db.getData(STORE_NAME.option, 'newTab'),
-                this.db.getData(STORE_NAME.option, 'lastRemove')
+                this.db.getData(STORE_NAME.option, 'lastRemove'),
+                this.db.getData(STORE_NAME.option, 'atOnce'),
+                this.db.getData(STORE_NAME.option, 'reverse')
             ]);
             let setTasks = [];
             let now = Date.now();
@@ -266,6 +277,20 @@ Setting.prototype = {
                 this.lastRemove = now;
                 setTasks.push(this.db.setData(STORE_NAME.option, { name: 'lastRemove', value: this.lastRemove }));
             }
+            if (resArray[3] !== null) {
+                this.atOnceSetting = resArray[3].value;
+            }
+            else {
+                this.atOnceSetting = {};
+                setTasks.push(this.db.setData(STORE_NAME.option, { name: 'atOnce', value: {} }));
+            }
+            if (resArray[4] !== null) {
+                this.reverse = resArray[4].value;
+            }
+            else {
+                this.reverse = false;
+                setTasks.push(this.db.setData(STORE_NAME.option, { name: 'reverse', value: false }));
+            }
             //問題リストを格納
             if (resArray[0] !== null) {
                 this.problemList = resArray[0].list;
@@ -280,30 +305,34 @@ Setting.prototype = {
                     setTasks.push(this.db.setData(STORE_NAME.problemList, { contestName: this.contestName, list: this.problemList, lastAccess: now }));
                 }
             }
-            this.atOnce.begin = 0;
-            this.atOnce.end = Math.min(ATONCE_TAB_MAX - 1, this.problemList.length - 1);
             
             //情報を更新
             await Promise.all(setTasks);
         }
         else {
-            this.newTab = false;
             this.problemList = await this.requestList(this.contestName);
+            this.newTab = false;
+            this.lastRemove = null;
+            this.atOnceSetting = {};
+            this.reverse = false;
         }
     },
     saveData: async function (name, value) {
-        await this.db.setData(STORE_NAME.option, { name, value });
-    },
-    removeOldData: async function () {
-        let now = Date.now();
         if (!this.dbExists) {
             return;
         }
+        await this.db.setData(STORE_NAME.option, { name, value });
+    },
+    removeOldData: async function () {
+        if (!this.dbExists) {
+            return;
+        }
+        let now = Date.now();
         if (now - this.lastRemove < REMOVE_INTERVAL) {
             return;
         }
         //最終アクセスが現在時刻より一定以上前の問題リストを削除する
-        let oldData = await this.db.getAllMatchedData(STORE_NAME.problemList, (data) => {return now - data.lastAccess >= REMOVE_BASE; });
+        let oldData = await this.db.getAllMatchedData(STORE_NAME.problemList, (data) => { return now - data.lastAccess >= REMOVE_BASE; });
         if (oldData.length !== 0) {
             let deleteTasks = [];
             for (let data of oldData) {
@@ -331,6 +360,43 @@ Setting.prototype = {
             this.contestName = this.contestName.slice(0, hash);
         }
     },
+    getContestCategoryAndAtOnce: function () {
+        if (this.problemList === null) {
+            return;
+        }
+        //コンテストの種類を取得
+        let got = false;
+        if (!got) {
+            for (let category of CONTEST_REGULAR) {
+                if (this.contestName.startsWith(category)) {
+                    this.contestCategory = category + '-' + (this.problemList.length).toString();
+                    got = true;
+                    break;
+                }
+            }
+        }
+        if (!got) {
+            for (let category of CONTEST_PERMANENT) {
+                if (this.contestName.startsWith(category)) {
+                    this.contestCategory = category;
+                    got = true;
+                    break;
+                }
+            }
+        }
+        if (!got) {
+            this.contestCategory = 'other';
+        }
+        
+        //atOnceの設定
+        if (this.atOnceSetting[this.contestCategory]) {
+            this.atOnce = this.atOnceSetting[this.contestCategory];
+        }
+        else {
+            this.atOnce.begin = 0;
+            this.atOnce.end = Math.min(ATONCE_TAB_MAX - 1, this.problemList.length - 1);
+        }
+    },
 };
 
 /* DOM操作およびスクリプト全体の動作を管理するクラス */
@@ -351,6 +417,8 @@ Launcher.prototype = {
         this.setting.getContestName();
         await this.setting.openDB();
         await this.setting.loadData();
+        this.setting.getLanguage();
+        this.setting.getContestCategoryAndAtOnce();
     },
     attachId: function () {
         let tabs = $('#contest-nav-tabs');
@@ -361,7 +429,7 @@ Launcher.prototype = {
         if (tasks_tab.length === 0) {
             return false;
         }
-        else{
+        else {
             tasks_tab.attr('id', `${ID_PREFIX}-tab`);
             return true;
         }
@@ -385,7 +453,7 @@ Launcher.prototype = {
     },
     addList: function () {
         let dropdown_menu = $(`#${ID_PREFIX}-tab`).parent().children('.dropdown-menu');
-    
+        
         /* [問題一覧]の追加 */
         let all_tasks = $('<a>', { href: `${CONTEST_URL}/${this.setting.contestName}/tasks` });
         all_tasks.append($('<span>', { class: 'glyphicon glyphicon-list' }).attr('aria-hidden', 'true'));
@@ -439,13 +507,11 @@ Launcher.prototype = {
                 a[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, setting: this.setting });
                 dropdown_menu.append($('<li>').append(a));
             }
-            console.log('[AtCoder Listing Tasks] Succeeded!');
         }
         else {
             //エラー情報を追加
             let a = $('<a>', { text: TEXT.loadingFailed[this.setting.lang] });
             dropdown_menu.append($('<li>').append(a));
-            console.log('[AtCoder Listing Tasks] Failed...');
         }
     },
     changeNewTabAttr: function (e) {
@@ -461,6 +527,9 @@ Launcher.prototype = {
     },
     
     addModal: function () {
+        if (this.setting.problemList === null) {
+            return;
+        }
         let modal = $('<div>', { id: `${ID_PREFIX}-modal`, class: 'modal fade', tabindex: '-1', role: 'dialog' });
         
         /* header */
@@ -475,8 +544,9 @@ Launcher.prototype = {
         body.append($('<p>', { text: TEXT.modalDiscription[this.setting.lang] }));
         let modalInfo = $('<p>');
         
-        //ラジオボタン
         let option = $('<div>', { class: `${PRE}-option` });
+        
+        //ラジオボタン
         let all = $('<div>', { class: `${PRE}-flex ${PRE}-select-all` });
         let specify = $('<div>', { class: `${PRE}-flex ${PRE}-select-specify` });
         let label_all = $('<label>', { class: `${PRE}-label-radio` });
@@ -506,7 +576,7 @@ Launcher.prototype = {
         //[範囲を選択]用のドロップダウン
         let select_begin = $('<div>', { class: `btn-group` });
         let begin_button = $('<button>', { class: `btn btn-default dropdown-toggle ${PRE}-toggle`, 'data-toggle': 'dropdown', 'aria-expanded': 'false', text: 'A', disabled: this.isAll });
-        begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));        
+        begin_button.append($('<span>', { class: `caret ${PRE}-caret` }));
         let begin_list = $('<ul>', { class: `dropdown-menu ${PRE}-list` });
         $.each(this.setting.problemList, (idx, data) => {
             begin_list.append($('<li>').append($('<a>', { text: `${data.diff} - ${data.name}`, 'data-index': (idx).toString() })));
@@ -561,9 +631,21 @@ Launcher.prototype = {
         begin_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, modalInfo, isBegin: true });
         end_list[0].addEventListener('click', { handleEvent: this.changeRange, that: this, begin_button, end_button, modalInfo, isBegin: false });
         
-        //組み立て
         specify.append(select_begin, between, select_end);
-        option.append(all, specify);
+        
+        //[逆順で開く]チェックボックス
+        let reverse = $('<div>', { class: 'checkbox' });
+        let label_reverse = $('<label>');
+        let check_reverse = $('<input>', { type: 'checkbox', name: 'reverse' });
+        check_reverse.prop('checked', this.setting.reverse);
+        check_reverse.on('click', (e) => {
+            this.setting.reverse = e.currentTarget.checked;
+        });
+        label_reverse.append(check_reverse, document.createTextNode(TEXT.reverse[this.setting.lang]));
+        reverse.append(label_reverse);
+        
+        //組み立て
+        option.append(all, specify, reverse);
         body.append(option);
         body.append(modalInfo);
         
@@ -572,20 +654,53 @@ Launcher.prototype = {
         let cancel = $('<button>', { type: 'button', class: 'btn btn-default', 'data-dismiss': 'modal', text: TEXT.cancel[this.setting.lang] });
         let open = $('<button>', { type: 'button', class: 'btn btn-primary', text: TEXT.atOnce[this.setting.lang] });
         open.on('click', (e) => {
+            //設定を保存
+            this.setting.saveData('reverse', this.setting.reverse);
+            if (this.setting.contestCategory !== 'other') {
+                this.setting.atOnceSetting[this.setting.contestCategory] = {};
+                if (this.isAll) {
+                    this.setting.atOnceSetting[this.setting.contestCategory].begin = 0;
+                    this.setting.atOnceSetting[this.setting.contestCategory].end = this.setting.problemList.length - 1;
+                }
+                else {
+                    this.setting.atOnceSetting[this.setting.contestCategory] = this.setting.atOnce;
+                }
+                this.setting.saveData('atOnce', this.setting.atOnceSetting);
+            }
+            
+            //タブを開く
             let blank = window.open('about:blank'); //ポップアップブロック用
             let idx = null;
             if (this.isAll) {
-                idx = this.setting.problemList.length - 1;
-                while (idx >= 0) {
-                    window.open(this.setting.problemList[idx].url, '_blank', 'popup, noopener, noreferrer');
-                    --idx;
+                if (!this.setting.reverse) {
+                    idx = 0;
+                    while (idx <= this.setting.problemList.length - 1) {
+                        window.open(this.setting.problemList[idx].url, '_blank', 'noopener, noreferrer');
+                        ++idx;
+                    }
+                }
+                else {
+                    idx = this.setting.problemList.length - 1;
+                    while (idx >= 0) {
+                        window.open(this.setting.problemList[idx].url, '_blank', 'noopener, noreferrer');
+                        --idx;
+                    }
                 }
             }
             else {
-                idx = this.setting.atOnce.end;
-                while (idx >= this.setting.atOnce.begin) {
-                    window.open(this.setting.problemList[idx].url, '_blank', 'popup, noopener, noreferrer');
-                    --idx;
+                if (!this.setting.reverse) {
+                    idx = this.setting.atOnce.begin;
+                    while (idx <= this.setting.atOnce.end) {
+                        window.open(this.setting.problemList[idx].url, '_blank', 'noopener, noreferrer');
+                        ++idx;
+                    }
+                }
+                else {
+                    idx = this.setting.atOnce.end;
+                    while (idx >= this.setting.atOnce.begin) {
+                        window.open(this.setting.problemList[idx].url, '_blank', 'noopener, noreferrer');
+                        --idx;
+                    }
                 }
             }
             modal.modal('hide');
@@ -670,25 +785,29 @@ Launcher.prototype = {
         modalInfo.text(text);
     },
     
-    
     launch: async function () {
         let tabExists = this.attachId();
-        //タブがない場合は終了
+        //[問題]タブがない場合は終了
         if (!tabExists) {
             console.log('[AtCoder Listing Tasks] [Tasks] Tab isn\'t exist.');
             return;
         }
         
         await this.loadSetting();
-        this.setting.getLanguage();
         this.addCss();
         this.changeToDropdown();
         this.addList();
         
         this.addModal();
         
-        window.localStorage.removeItem(OLD_SETTING_KEY);
         await this.setting.removeOldData();
+        
+        if (this.setting.problemList !== null) {
+            console.log('[AtCoder Listing Tasks] Succeeded!');
+        }
+        else {
+            console.warn('[AtCoder Listing Tasks] Failed...');
+        }
     },
 };
 
