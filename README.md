@@ -2,7 +2,7 @@
 AtCoderのコンテストページで[問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 
 # インストール
-1. [Tampermonkey](https://www.tampermonkey.net/) をインストールしていない場合はインストールしてください。
+1. [Tampermonkey](https://www.tampermonkey.net) をインストールしていない場合はインストールしてください。
 
 2. [AtCoder Listing Tasks - Greasy Fork](https://greasyfork.org/ja/scripts/467289-atcoder-listing-tasks) のサイトで[スクリプトをインストール]を押し、確認画面に移ったらもう一度[インストール]を押してください。
 
