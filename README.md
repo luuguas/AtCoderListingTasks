@@ -1,6 +1,4 @@
 # 概要
-When you click [Tasks] tab in AtCoder contest pages, you can open a drop-down list linked to each task.
-
 AtCoderのコンテストページで[問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 
 # インストール
@@ -15,7 +13,7 @@ AtCoderのコンテストページで[問題]タブをクリックすると、�
 
 [新しいタブで開く]のチェックをONにすると、移動先のページが新しいタブで開きます。
 
-![Screenshot_2023-07-05-22-00-22-755](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/3171abd1-b618-4f04-85e3-7e2f9d835cc7)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/3171abd1-b618-4f04-85e3-7e2f9d835cc7)
 
 ---
 
@@ -31,5 +29,9 @@ AtCoderのコンテストページで[問題]タブをクリックすると、�
 
 (Chrome では、ポップアップがブロックされるとアドレスバーにアイコンが表示されます。それをクリックして「常に許可する」を選択することで、ポップアップを許可できます。)
 
-![Screenshot_2023-07-06-10-30-17-556](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/19adfbee-50d6-4fff-9f8e-171ec936a32f)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/19adfbee-50d6-4fff-9f8e-171ec936a32f)
 
+# リポジトリ
+GitHub: https://github.com/luuguas/AtCoderListingTasks
+
+不具合の報告や改善の提案などがありましたら、[Issues](https://github.com/luuguas/AtCoderListingTasks/issues) または [Pull Requests](https://github.com/luuguas/AtCoderListingTasks/pulls) のページからご連絡ください。
