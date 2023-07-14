@@ -1,10 +1,8 @@
 # 概要
-When you click [Tasks] tab in AtCoder contest pages, you can open a drop-down list linked to each task.
-
 AtCoderのコンテストページで[問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 
 # インストール
-1. [Tampermonkey](https://www.tampermonkey.net/) をインストールしていない場合はインストールしてください。
+1. [Tampermonkey](https://www.tampermonkey.net) をインストールしていない場合はインストールしてください。
 
 2. [AtCoder Listing Tasks - Greasy Fork](https://greasyfork.org/ja/scripts/467289-atcoder-listing-tasks) のサイトで[スクリプトをインストール]を押し、確認画面に移ったらもう一度[インストール]を押してください。
 
@@ -15,7 +13,7 @@ AtCoderのコンテストページで[問題]タブをクリックすると、�
 
 [新しいタブで開く]のチェックをONにすると、移動先のページが新しいタブで開きます。
 
-![Screenshot_2023-07-05-22-00-22-755](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/3171abd1-b618-4f04-85e3-7e2f9d835cc7)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/3171abd1-b618-4f04-85e3-7e2f9d835cc7)
 
 ---
 
@@ -25,11 +23,15 @@ AtCoderのコンテストページで[問題]タブをクリックすると、�
 
 また、[逆順で開く]のチェックをONにすると、問題が逆順で開かれます。
 
-そして、右下の[まとめて開く]を押すことで、選択した問題全てを一度に開くことができます。
+そして、右下の[まとめて開く]ボタンを押すことで、選択した問題を一度に開くことができます。
 
 ただし、ブラウザの設定でポップアップがブロックされている場合は、ボタンを押しても問題が開かれません。その場合はブラウザの設定を変更し、ポップアップを許可してください。
 
 (Chrome では、ポップアップがブロックされるとアドレスバーにアイコンが表示されます。それをクリックして「常に許可する」を選択することで、ポップアップを許可できます。)
 
-![Screenshot_2023-07-06-10-30-17-556](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/19adfbee-50d6-4fff-9f8e-171ec936a32f)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/19adfbee-50d6-4fff-9f8e-171ec936a32f)
 
+# リポジトリ
+GitHub: https://github.com/luuguas/AtCoderListingTasks
+
+不具合の報告や改善の提案などがありましたら、[Issues](https://github.com/luuguas/AtCoderListingTasks/issues) または [Pull Requests](https://github.com/luuguas/AtCoderListingTasks/pulls) のページからご連絡ください。
