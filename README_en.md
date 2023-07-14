@@ -1,3 +1,5 @@
+Language: [日本語](https://github.com/luuguas/AtCoderListingTasks/blob/main/README.md) | English
+
 # Overview
 When you click [Tasks] tab in AtCoder contest pages, you can open a drop-down list linked to each problem.
 
