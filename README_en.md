@@ -29,7 +29,7 @@ However, if pop-ups are blocked in your browser settings, the problems will not 
 
 (In Chrome, when pop-ups are blocked, an icon will appear in the address bar. you can allow pop-ups by clicking on it and selecting "Always allow.")
 
-![Screenshot_2023-07-14-22-07-14-770](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/0744361e-5666-4e33-a937-9bce2ecab251)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/0744361e-5666-4e33-a937-9bce2ecab251)
 
 # Repository
 GitHub: https://github.com/luuguas/AtCoderListingTasks
