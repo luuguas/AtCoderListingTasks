@@ -3,7 +3,7 @@
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
 // @version        1.5.1
 // @description    [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
-// @description:en Click [Tasks] tab to open a drop-down list linked to each task.
+// @description:en Click [Tasks] tab to open a drop-down list linked to each problem.
 // @author         luuguas
 // @license        Apache-2.0
 // @supportURL     https://github.com/luuguas/AtCoderListingTasks/issues
@@ -96,13 +96,13 @@ const TEXT = {
     taskTable: { 'ja': '問題一覧', 'en': 'Task Table' },
     loadingFailed: { 'ja': '(読み込み失敗)', 'en': '(Loading Failed)' },
     atOnce: { 'ja': 'まとめて開く', 'en': 'Open at once' },
-    modalDiscription: { 'ja': '複数の問題をまとめて開きます。', 'en': 'Open several tasks at once.' },
+    modalDiscription: { 'ja': '複数の問題をまとめて開きます。', 'en': 'Open several problems at once.' },
     cancel: { 'ja': 'キャンセル', 'en': 'Cancel' },
     all: { 'ja': 'すべて', 'en': 'All' },
     specify: { 'ja': '範囲を指定', 'en': 'Specify the range' },
     caution: { 'ja': `※一度に開くことのできるタブは ${ATONCE_TAB_MAX} 個までです。`, 'en': `*Up to ${ATONCE_TAB_MAX} tabs can be open at once.` },
     reverse: { 'ja': '逆順で開く', 'en': 'Open in reverse order' },
-    modalInfo: { 'ja': 'が開かれます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will be opened. (If pop-ups are blocked, please allow them.)' },
+    modalInfo: { 'ja': 'が開かれます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will open. (If pop-ups are blocked, please allow them.)' },
     aTab: { 'ja': '個のタブ', 'en': 'tab ' },
     tabs: { 'ja': '個のタブ', 'en': 'tabs ' },
 };
@@ -112,9 +112,9 @@ const DB_VERSION = 1;
 const STORE_NAME = { option: 'option', problemList: 'problemList' };
 const STORE_INFO = [{ storeName: STORE_NAME.option, keyPath: 'name' }, { storeName: STORE_NAME.problemList, keyPath: 'contestName' }];
 
-const REMOVE_INTERVAL = 1 * 60 * 60 * 1000;
-const REMOVE_BASE = 10 * 24 * 60 * 60 * 1000;
-const ACCESS_INTERVAL = 1 * 60 * 1000;
+const REMOVE_INTERVAL = 1 * 60 * 60 * 1000;   //1時間
+const REMOVE_BASE = 10 * 24 * 60 * 60 * 1000; //10日
+const ACCESS_INTERVAL = 5 * 60 * 1000;        //5分
 
 /*IndexedDBを扱うクラス
   https://github.com/luuguas/IndexedDBManager */
@@ -458,12 +458,12 @@ Launcher.prototype = {
         let dropdown_menu = $(`#${ID_PREFIX}-tab`).parent().children('.dropdown-menu');
         
         /* [問題一覧]の追加 */
-        let all_tasks = $('<a>', { href: `${CONTEST_URL}/${this.setting.contestName}/tasks` });
-        all_tasks.append($('<span>', { class: 'glyphicon glyphicon-list', 'aria-hidden': 'true' }));
-        all_tasks.append(document.createTextNode(' ' + TEXT.taskTable[this.setting.lang]));
+        let task_table = $('<a>', { href: `${CONTEST_URL}/${this.setting.contestName}/tasks` });
+        task_table.append($('<span>', { class: 'glyphicon glyphicon-list', 'aria-hidden': 'true' }));
+        task_table.append(document.createTextNode(' ' + TEXT.taskTable[this.setting.lang]));
         //チェックボックスにチェックが付いていたら新しいタブで開く
-        all_tasks[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, setting: this.setting });
-        dropdown_menu.append($('<li>').append(all_tasks));
+        task_table[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, setting: this.setting });
+        dropdown_menu.append($('<li>').append(task_table));
         
         /* [まとめて開く]の追加 */
         if (this.setting.problemList !== null) {
@@ -478,7 +478,7 @@ Launcher.prototype = {
         
         /* [新しいタブで開く]の追加 */
         let label = $('<label>', { class: `${PRE}-label` });
-        label.css('color', all_tasks.css('color')); //[問題一覧]から色情報を取得
+        label.css('color', task_table.css('color')); //[問題一覧]から色情報を取得
         let checkbox = $('<input>', { type: 'checkbox', class: `${PRE}-checkbox` });
         //チェックボックスはチェック状態をストレージと同期
         checkbox.prop('checked', this.setting.newTab);
