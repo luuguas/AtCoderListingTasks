@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           AtCoder Listing Tasks
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
-// @version        1.5
+// @version        1.5.1
 // @description    [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 // @description:en Click [Tasks] tab to open a drop-down list linked to each task.
 // @author         luuguas
@@ -39,6 +39,9 @@ const CSS = `
     clear: both;
     font-weight: normal;
     white-space: nowrap;
+}
+.${PRE}-label:hover {
+    background-color: #f5f5f5;
 }
 .${PRE}-checkbox {
     margin: 0px !important;
@@ -90,7 +93,7 @@ const CSS = `
 `;
 const TEXT = {
     newTab: { 'ja': '新しいタブで開く', 'en': 'Open in a new tab' },
-    allTasks: { 'ja': '問題一覧', 'en': 'Task Table' },
+    taskTable: { 'ja': '問題一覧', 'en': 'Task Table' },
     loadingFailed: { 'ja': '(読み込み失敗)', 'en': '(Loading Failed)' },
     atOnce: { 'ja': 'まとめて開く', 'en': 'Open at once' },
     modalDiscription: { 'ja': '複数の問題をまとめて開きます。', 'en': 'Open several tasks at once.' },
@@ -456,8 +459,8 @@ Launcher.prototype = {
         
         /* [問題一覧]の追加 */
         let all_tasks = $('<a>', { href: `${CONTEST_URL}/${this.setting.contestName}/tasks` });
-        all_tasks.append($('<span>', { class: 'glyphicon glyphicon-list' }).attr('aria-hidden', 'true'));
-        all_tasks.append(document.createTextNode(' ' + TEXT.allTasks[this.setting.lang]));
+        all_tasks.append($('<span>', { class: 'glyphicon glyphicon-list', 'aria-hidden': 'true' }));
+        all_tasks.append(document.createTextNode(' ' + TEXT.taskTable[this.setting.lang]));
         //チェックボックスにチェックが付いていたら新しいタブで開く
         all_tasks[0].addEventListener('click', { handleEvent: this.changeNewTabAttr, setting: this.setting });
         dropdown_menu.append($('<li>').append(all_tasks));
@@ -465,9 +468,9 @@ Launcher.prototype = {
         /* [まとめて開く]の追加 */
         if (this.setting.problemList !== null) {
             let at_once = $('<a>');
-            at_once.append($('<span>', { class: 'glyphicon glyphicon-sort-by-attributes-alt' }).attr('aria-hidden', 'true'));
+            at_once.append($('<span>', { class: 'glyphicon glyphicon-sort-by-attributes-alt', 'aria-hidden': 'true' }));
             at_once.append(document.createTextNode(' ' + TEXT.atOnce[this.setting.lang] + '...'));
-            at_once[0].addEventListener('click', (e) => {
+            at_once.on('click', (e) => {
                 $(`#${ID_PREFIX}-modal`).modal('show');
             });
             dropdown_menu.append($('<li>').append(at_once));
