@@ -1,3 +1,5 @@
+言語: 日本語 | [English](https://github.com/luuguas/AtCoderListingTasks/blob/main/README_en.md)
+
 # 概要
 AtCoderのコンテストページで[問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
 
