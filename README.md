@@ -31,7 +31,7 @@ AtCoderのコンテストページで「問題」タブをクリックすると�
 
 そして、右下の「まとめて開く」ボタンを押すことで、選択した問題が開きます。
 
-![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/19adfbee-50d6-4fff-9f8e-171ec936a32f)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/734c9a00-b55a-4809-a32a-ec7dd9a781c9)
 
 ### 注意
 ブラウザの設定でポップアップがブロックされている場合は、ボタンを押しても問題が開きません。その場合はブラウザの設定を変更し、ポップアップを許可してください。
