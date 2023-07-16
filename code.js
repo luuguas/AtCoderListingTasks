@@ -792,7 +792,7 @@ Launcher.prototype = {
         let tabExists = this.attachId();
         //[問題]タブがない場合は終了
         if (!tabExists) {
-            console.log('[AtCoder Listing Tasks] [Tasks] Tab isn\'t exist.');
+            console.log('[AtCoder Listing Tasks] The "Tasks" tab does not exist.');
             return;
         }
         
