@@ -68,7 +68,6 @@ const CSS = `
     opacity: 0.65;
 }
 .${PRE}-caution {
-    margin-left: 15px;
     color: red;
 }
 .${PRE}-toggle {
@@ -573,7 +572,7 @@ Launcher.prototype = {
             label_all.addClass(`${PRE}-disabled`);
             caution.text(TEXT.caution[this.setting.lang]);
         }
-        all.append($('<div>', { class: `radio ${PRE}-radio` }).append(label_all, caution));
+        all.append($('<div>', { class: `radio ${PRE}-radio` }).append(label_all), caution);
         specify.append($('<div>', { class: `radio ${PRE}-radio` }).append(label_specify));
         
         //[範囲を選択]用のドロップダウン
