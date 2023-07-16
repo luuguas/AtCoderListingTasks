@@ -1,5 +1,6 @@
 // ==UserScript==
 // @name           AtCoder Listing Tasks
+// @name:en        AtCoder Listing Tasks
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
 // @version        1.5.2
 // @description    「問題」タブをクリックすると、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。
