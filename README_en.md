@@ -18,7 +18,7 @@ When you click on the "Tasks" tab on the contest page, a drop-down list with lin
 ![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/c33415a0-aa23-43a8-a8ce-8b8d415b50f4)
 
 ## "Open at once" dialog box
-When you click on the "Open at once…" button, a dialog box will open, you can open several problems at once.
+When you click on the "Open at once…" button, a dialog box will open, and you can open several problems at once.
 
 First, select the range of problems you want to open. The upper limit on the number of problems you can open at once is 20.
 
