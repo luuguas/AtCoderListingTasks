@@ -1,10 +1,9 @@
 // ==UserScript==
 // @name           AtCoder Listing Tasks
-// @name:en        AtCoder Listing Tasks
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
-// @version        1.5.1
-// @description    [問題]タブをクリックすると、各問題のページに移動できるドロップダウンリストを表示します。
-// @description:en Click [Tasks] tab to open a drop-down list linked to each problem.
+// @version        1.5.2
+// @description    「問題」タブをクリックすると、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。
+// @description:en Click on the "Tasks" tab to open a drop-down list that takes you to the page for each problem in the contest.
 // @author         luuguas
 // @license        Apache-2.0
 // @supportURL     https://github.com/luuguas/AtCoderListingTasks/issues
@@ -101,9 +100,9 @@ const TEXT = {
     cancel: { 'ja': 'キャンセル', 'en': 'Cancel' },
     all: { 'ja': 'すべて', 'en': 'All' },
     specify: { 'ja': '範囲を指定', 'en': 'Specify the range' },
-    caution: { 'ja': `※一度に開くことのできるタブは ${ATONCE_TAB_MAX} 個までです。`, 'en': `*Up to ${ATONCE_TAB_MAX} tabs can be open at once.` },
+    caution: { 'ja': `※一度に開くことのできるタブは ${ATONCE_TAB_MAX} 個までです。`, 'en': `*Up to ${ATONCE_TAB_MAX} tabs are allowed to open at once.` },
     reverse: { 'ja': '逆順で開く', 'en': 'Open in reverse order' },
-    modalInfo: { 'ja': 'が開かれます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will open. (If pop-ups are blocked, please allow them.)' },
+    modalInfo: { 'ja': 'が開きます。(ポップアップがブロックされた場合は許可してください。)', 'en': 'will open. (If pop-ups are blocked, please allow them.)' },
     aTab: { 'ja': '個のタブ', 'en': 'tab ' },
     tabs: { 'ja': '個のタブ', 'en': 'tabs ' },
 };
