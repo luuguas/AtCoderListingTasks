@@ -15,7 +15,7 @@ When you click on the "Tasks" tab on the contest page, a drop-down list with lin
 - Task Table … Navigate to the page with the table of problems.
 - Open at once … The "Open at once" dialog box will open. Please see below for details.
 
-![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/c33415a0-aa23-43a8-a8ce-8b8d415b50f4)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/73934565-064e-4343-bd23-ff0417df23da)
 
 ## "Open at once" dialog box
 When you click on the "Open at once…" button, a dialog box will open, and you can open several problems at once.
@@ -31,7 +31,7 @@ You can also select other options.
 
 Then, you can open the selected problems by clicking on the "Open at once" button in the lower right corner.
 
-![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/0744361e-5666-4e33-a937-9bce2ecab251)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/c68577d6-12fd-4085-b795-c1e0e3ec35af)
 
 ### Caution
 If pop-ups are blocked in your browser settings, the problems will not open even if you click the button. In that case, please change your browser settings and allow pop-ups.
