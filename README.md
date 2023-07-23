@@ -15,7 +15,7 @@ AtCoderのコンテストページで「問題」タブをクリックすると�
 - 問題一覧 … 問題の一覧ページに移動します。
 - まとめて開く … 「まとめて開く」ダイアログが開きます。詳しくは下記を参照してください。
 
-![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/3171abd1-b618-4f04-85e3-7e2f9d835cc7)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/3f33c0ee-7362-45fa-a788-e81eb40bb0f5)
 
 ## 「まとめて開く」ダイアログ
 「まとめて開く…」を押すと、専用のダイアログが開き、複数の問題をまとめて開くことができます。
@@ -31,7 +31,7 @@ AtCoderのコンテストページで「問題」タブをクリックすると�
 
 そして、右下の「まとめて開く」ボタンを押すことで、選択した問題が開きます。
 
-![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/734c9a00-b55a-4809-a32a-ec7dd9a781c9)
+![](https://github.com/luuguas/AtCoderListingTasks/assets/69027878/f5a3f66e-0ba2-4838-839c-bb447a86dc57)
 
 ### 注意
 ブラウザの設定でポップアップがブロックされている場合は、ボタンを押しても問題が開きません。その場合はブラウザの設定を変更し、ポップアップを許可してください。
