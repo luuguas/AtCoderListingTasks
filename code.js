@@ -2,7 +2,7 @@
 // @name           AtCoder Listing Tasks
 // @name:en        AtCoder Listing Tasks
 // @namespace      https://github.com/luuguas/AtCoderListingTasks
-// @version        1.5.2
+// @version        1.5.3
 // @description    「問題」タブをクリックすると、コンテスト内の各問題のページに移動できるドロップダウンリストを表示します。
 // @description:en Click on the "Tasks" tab to open a drop-down list that takes you to the page for each problem in the contest.
 // @author         luuguas
@@ -76,6 +76,9 @@ const CSS = `
 }
 .${PRE}-caret {
     margin-left: 5px !important;
+}
+span.${PRE}-caret {
+    color: #333 !important;
 }
 .${PRE}-list {
     max-height: 800%;
