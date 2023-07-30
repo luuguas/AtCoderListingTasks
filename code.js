@@ -323,6 +323,28 @@ Setting.prototype = {
             this.reverse = false;
         }
     },
+    loadLastRemove: async function () {
+        if (this.dbExists) {
+            //データベースから情報を読み込む
+            let res = await this.db.getData(STORE_NAME.option, 'lastRemove');
+            let setTasks = [];
+            let now = Date.now();
+            //設定を格納
+            if (res !== null) {
+                this.lastRemove = res;
+            }
+            else {
+                this.lastRemove = now;
+                setTasks.push(this.db.setData(STORE_NAME.option, { name: 'lastRemove', value: this.lastRemove }));
+            }
+            
+            //情報を更新
+            await Promise.all(setTasks);
+        }
+        else {
+            this.lastRemove = null;
+        }
+    },
     saveData: async function (name, value) {
         if (!this.dbExists) {
             return;
@@ -792,27 +814,36 @@ Launcher.prototype = {
     },
     
     launch: async function () {
-        let tabExists = this.attachId();
-        //[問題]タブがない場合は終了
-        if (!tabExists) {
-            console.log('[AtCoder Listing Tasks] The "Tasks" tab does not exist.');
+        //jQueryがない場合は終了
+        if (typeof $ === 'undefined') {
+            console.warn('[AtCoder Listing Tasks] jQuery is not installed.');
+            console.warn('[AtCoder Listing Tasks] Failed...');
             return;
         }
         
-        await this.loadSetting();
-        this.addCss();
-        this.changeToDropdown();
-        this.addList();
-        
-        this.addModal();
-        
-        await this.setting.removeOldData();
-        
-        if (this.setting.problemList !== null) {
-            console.log('[AtCoder Listing Tasks] Succeeded!');
+        let tabExists = this.attachId();
+        if (tabExists) {
+            await this.loadSetting();
+            this.addCss();
+            this.changeToDropdown();
+            this.addList();
+            this.addModal();
+            await this.setting.removeOldData();
+            
+            if (this.setting.problemList !== null) {
+                console.log('[AtCoder Listing Tasks] Succeeded!');
+            }
+            else {
+                console.warn('[AtCoder Listing Tasks] Failed...');
+            }
         }
         else {
-            console.warn('[AtCoder Listing Tasks] Failed...');
+            console.log('[AtCoder Listing Tasks] The "Tasks" tab does not exist.');
+            await this.setting.openDB();
+            await this.setting.loadLastRemove();
+            await this.setting.removeOldData();
+            
+            console.log('[AtCoder Listing Tasks] Succeeded!');
         }
     },
 };
