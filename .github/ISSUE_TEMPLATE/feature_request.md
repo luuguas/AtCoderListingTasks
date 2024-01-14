@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: 機能追加などの改善の提案はこちら
-labels: improvement
+labels: enhancement
 
 ---
 
@@ -19,6 +19,7 @@ labels: improvement
 
 ## 詳細
 <!--提案の詳細をリストで記入-->
+<!--内容が「タスク」とほぼ同じ場合は「タスクを参照」と記入してもよい-->
 - 
 
 ## タスク
